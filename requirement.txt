@@ -1,0 +1,11 @@
+django
+django-cors-headers
+channels
+djangorestframework
+celery[redis]
+django-filter
+djangorestframework-jwt
+coreapi-cli
+pycrypto
+asyncssh
+ansible
