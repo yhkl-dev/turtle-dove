@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from TurtleDove.paginations import Pagination
 from .serializers import ResourceUserSerializer, ResourceSerializer, ResourceTypeSerializer
 from .models import ResourceUser, Resource, ResourceType
-from .filters import ResourcesFilter
+from .filters import ResourcesFilter, ResourceUserFilter
 
 
 class ResourceTypeViewset(viewsets.ModelViewSet):
@@ -54,3 +54,6 @@ class ResourceUserViewset(viewsets.ModelViewSet):
     queryset = ResourceUser.objects.all()
     serializer_class = ResourceUserSerializer
     pagination_class = Pagination
+
+    filter_class = ResourceUserFilter
+    filter_fields = ('user_name', "belong_resource" )

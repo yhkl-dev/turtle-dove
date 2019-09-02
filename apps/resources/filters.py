@@ -52,18 +52,14 @@ class ResourceUserFilter(django_filters.rest_framework.FilterSet):
     """
 
     user_name = django_filters.CharFilter(method="search_user_name")
-    resource = django_filters.NumberFilter(method="search_resource")
-    belong_user = django_filters.NumberFilter(method="search_belong_user")
-
-    def search_resource(self, queryset, name, value):
-        return queryset.filter(resource__exact=value)
+    belong_resource = django_filters.NumberFilter(method="search_belong_resource")
 
     def search_user_name(self, queryset, name, value):
         return queryset.filter(user_name__exact=value)
 
-    def search_belong_user(self, queryset, name, value):
-        return queryset.filter(belong_user__exact=value)
+    def search_belong_resource(self, queryset, name, value):
+        return queryset.filter(belong_resource__exact=value)
 
     class Meta:
         model = ResourceUser
-        fields = ['user_name', "resource", "belong_user"]
+        fields = ['user_name', "belong_resource"]

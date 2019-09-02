@@ -26,9 +26,10 @@ class ResourceSerializer(serializers.ModelSerializer):
         except Exception:
             return {}
 
-    def get_resource_user_info(self, resource_user_obj):
+    def get_resource_user_info(self, resource_user_obj, resource_obj):
         try:
             return {
+                "id": resource_user_obj.id,
                 "create_time": resource_user_obj.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_login_time":
                     resource_user_obj.last_login_time if resource_user_obj.last_login_time is None else resource_user_obj.last_login_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -36,7 +37,9 @@ class ResourceSerializer(serializers.ModelSerializer):
                 "user_password": resource_user_obj.user_password,
                 "port": resource_user_obj.port,
                 # "private_key": resource_user_obj.private_key,
-                "is_superuser": resource_user_obj.get_is_superuser_display()
+                "is_superuser": resource_user_obj.get_is_superuser_display(),
+                "manage_ip": resource_obj.manage_ip,
+                "system_type": resource_obj.resource_type.type_name
             }
         except Exception as e:
             print(e)
@@ -51,7 +54,7 @@ class ResourceSerializer(serializers.ModelSerializer):
         ret = super(ResourceSerializer, self).to_representation(instance)
         ret["resource_user_info"] = []
         for resource_user_obj in resource_user_queryset:
-            ret["resource_user_info"].append(self.get_resource_user_info(resource_user_obj))
+            ret["resource_user_info"].append(self.get_resource_user_info(resource_user_obj, instance))
         ret["server_purpose"] = server_purpose
         ret["service"] = service
         ret['type_name'] = resource_type_obj.type_name
@@ -74,9 +77,9 @@ class ResourceUserSerializer(serializers.ModelSerializer):
         resource_obj = Resource.objects.get(id=instance.belong_resource.id)
         ret = super(ResourceUserSerializer, self).to_representation(instance)
         ret["belong_resource"] = resource_obj.resource_name
+        ret["manage_ip"] = resource_obj.manage_ip
         return ret
 
     class Meta:
         model = ResourceUser
         fields = '__all__'
-
