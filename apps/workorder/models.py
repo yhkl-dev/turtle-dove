@@ -4,29 +4,195 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class WorkOrder(models.Model):
-
-    STATUS = (
-        (0, '申请'),
-        (1, '处理中'),
-        (2, '执行中'),
-        (3, '完成'),
-        (4, '失败'),
+class WorkOrderTaskFlow(models.Model):
+    '''
+        工单执行流程
+    '''
+    FLOW_TYPE_STATUS = (
+        (0, 'executer'),
+        (1, 'audit')
     )
 
-    title = models.CharField(max_length=100, verbose_name='标题')
-    order_content = models.TextField('内容')
-    applicant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='work_order_applicant', verbose_name='申请人')
-    processor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='work_order_applicant', verbose_name='处理人')
-    order_status = models.IntegerField(choices=STATUS)
-    apply_time = models.DateTimeField(auto_now_add=True, verbose_name='申请时间')
-    complete_time = models.DateTimeField(auto_now=True, verbose_name='处理完成时间')
+    flow_name = models.CharField('流程名称', max_length=200, help_text='流程名称')
+    flow_type = models.IntegerField('流程类型', choices=FLOW_TYPE_STATUS, help_text='流程类型')
+    create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
+    change_time = models.DateTimeField('上次修改时间', auto_now_add=True, help_text='上次修改时间')
 
     def __str__(self):
-        return self.title
+        return self.flow_name
 
     class Meta:
+        ordering = ['id']
+        db_table = 'work_order_flow'
 
-        verbose_name = '工单'
-        db_table = 'version_work_order'
-        ordering = ['complete_time']
+
+class WorkOrderTaskFlowItem(models.Model):
+    '''
+        工单执行流程项
+    '''
+
+    flow_name = models.ForeignKey(WorkOrderTaskFlow,
+                                  on_delete=models.CASCADE,
+                                  help_text='流程名称',
+                                  null=False,
+                                  verbose_name='流程名称',
+                                  related_name='flow_name')
+    flow_item_name = models.CharField('流程项名称', max_length=200, help_text='流程项名称')
+    exec_order = models.IntegerField('执行顺序', help_text='执行顺序')
+    exec_user = models.ForeignKey(User,
+                                  on_delete=models.CASCADE,
+                                  null=False,
+                                  help_text='执行/审核用户',
+                                  verbose_name='执行/审核用户',
+                                  related_name='exec_user')
+
+
+    def __str__(self):
+        return "{}[{}]".format(self.flow_name, self.flow_item_name)
+
+    class Meta:
+        ordering = ['id']
+        db_table = 'work_order_flow_item'
+
+
+class WorkOrderType(models.Model):
+    '''
+        工单类型表
+    '''
+
+    ORDER_STATUS_CHOICE = (
+        (0, '禁用'),
+        (1, '启用')
+    )
+
+    type_name = models.CharField('类型名称', max_length=200, help_text='类型名称')
+    task_exec_flow = models.ForeignKey(WorkOrderTaskFlow,
+                                       on_delete=models.CASCADE,
+                                       help_text='工单执行流程',
+                                       null=False,
+                                       verbose_name='工单执行流程',
+                                       related_name='exec_flow')
+    task_audit_flow = models.ForeignKey(WorkOrderTaskFlow,
+                                        on_delete=models.CASCADE,
+                                        help_text='工单审核流程',
+                                        null=False,
+                                        verbose_name='工单审核流程',
+                                        related_name='audit_flow')
+    order_status = models.IntegerField('工单状态', choices=ORDER_STATUS_CHOICE, default=1, help_text='状态')
+    create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text="添加时间")
+    change_time = models.DateTimeField('修改时间', auto_now=True,  help_text="修改时间")
+
+    def __str__(self):
+        return "{}".format(self.type_name)
+
+    class Meta:
+        ordering = ['id']
+        db_table = 'work_order_type'
+
+
+class WorkOrderTask(models.Model):
+
+    '''
+        工单内容表
+    '''
+
+    ORDER_STATUS_CHOICE = (
+        (1, '待提交'),
+        (2, '审核中'),
+        (3, '执行人确认中'),
+        (4, '执行人执行中'),
+        (5, '执行人延期执行中'),
+        (6, '执行完成,用户确认中'),
+        (7, '审核驳回,等待用户确认'),
+        (8, '执行驳回,等待用户确认'),
+        (9, '用户确认不通过,等待执行重做'),
+        (10, '完成关闭'),
+        (11, '驳回关闭'),
+        (12, '撤销关闭'),
+    )
+
+    order_task_id = models.CharField('工单ID', max_length=100, help_text='工单ID')
+    order_title = models.CharField('工单标题', max_length=100, help_text='工单标题')
+    order_type = models.ForeignKey(WorkOrderType,
+                                   on_delete=models.CASCADE,
+                                   null=False,
+                                   help_text='工单类型',
+                                   verbose_name='工单类型',
+                                   related_name='type')
+    created_user = models.ForeignKey(User,
+                                     on_delete=models.CASCADE,
+                                     null=False,
+                                     help_text='创建用户',
+                                     verbose_name='创建用户',
+                                     related_name='created_user')
+
+    order_purpose = models.TextField('工单需求', help_text='工单需求')
+    create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
+    current_exec_user = models.ForeignKey(User,
+                                          on_delete=models.CASCADE,
+                                          null=True,
+                                          help_text='当前执行用户',
+                                          verbose_name='当前执行用户',
+                                          related_name='exec_user')
+    current_audit_user = models.ForeignKey(User,
+                                           on_delete=models.CASCADE,
+                                           null=True,
+                                           help_text='当前审核用户',
+                                           verbose_name='当前审核用户',
+                                           related_name='audit_user')
+    order_result = models.TextField('工单结果', help_text='工单结果')
+    order_status = models.IntegerField('工单状态', choices=ORDER_STATUS_CHOICE, default=1, help_text='工单状态')
+
+    def __str__(self):
+        return "{}[{}]".format(self.order_title, self.order_task_id)
+
+    class Meta:
+        ordering = ['create_time']
+        db_table = 'work_order_task'
+
+
+class WorkOrderOperation(models.Model):
+
+    '''
+        工单操作表
+    '''
+    OPS_STATUS_CHIOCE = (
+        (1, '提交'),
+        (2, '审核通过'),
+        (3, '审核不通过'),
+        (4, '审核转发'),
+        (5, '确认执行'),
+        (6, '执行确认不通过'),
+        (7, '延期执行'),
+        (8, '执行完成'),
+        (9, '执行转发'),
+        (10, '用户确认不通过'),
+        (11, '关闭'),
+        (12, '重走流程'),
+        (13, '重新编辑'),
+        (14, '撤回工单'),
+        (15, '回复'),
+    )
+
+    work_order = models.ForeignKey(WorkOrderTask,
+                                   on_delete=models.CASCADE, null=False,
+                                   help_text='工单名称',
+                                   verbose_name='工单名称',
+                                   related_name='work_order_task')
+    ops_user = models.ForeignKey(User,
+                                 on_delete=models.CASCADE,
+                                 null=False,
+                                 help_text='执行用户',
+                                 verbose_name='执行用户',
+                                 related_name='work_order_ops_user')
+    ops_status = models.IntegerField('操作状态', choices=OPS_STATUS_CHIOCE, help_text='操作状态')
+    ops_reply_content = models.CharField('回复内容', null=True, help_text='回复内容')
+    create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
+
+    def __str__(self):
+        return self.id
+
+    class Meta:
+        ordering = ['id']
+        db_table = 'work_order_operation'
+
