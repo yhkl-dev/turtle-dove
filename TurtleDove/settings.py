@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'products.apps.ProductsConfig',
     'zabbix.apps.ZabbixConfig',
     'opsdocs.apps.OpsdocsConfig',
-    'autotask.apps.AutotaskConfig'
+    'autotask.apps.AutotaskConfig',
+    'serverreports.apps.ServerreportsConfig',
+    'workorder.apps.WorkorderConfig'
 ]
 
 MIDDLEWARE = [
@@ -72,6 +74,7 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'TurtleDove.urls'
 
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 AUTH_USER_MODEL = "users.User"
 
@@ -201,7 +204,6 @@ PDF_FILE_PATH = '/tmp/pdf_files/'
 
 # report
 REPORT_FILE_PATH = BASE_DIR + '/report_files/'
-
 
 # Celery
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/11'   # redis作为中间件

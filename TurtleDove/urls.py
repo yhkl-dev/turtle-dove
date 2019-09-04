@@ -25,8 +25,9 @@ from products.router import products_router
 from zabbix.router import zabbix_router
 from resources.router import resource_router
 from opsdocs.router import docs_router
-# from serverreports.router import reports_router
-# from serverreports.views import download_file
+from serverreports.router import reports_router
+from workorder.router import work_order_router
+from serverreports.views import download_file
 from autotask.router import tasks_router
 router = DefaultRouter()
 
@@ -38,12 +39,14 @@ router.registry.extend(resource_router.registry)
 router.registry.extend(products_router.registry)
 router.registry.extend(zabbix_router.registry)
 router.registry.extend(docs_router.registry)
-# router.registry.extend(reports_router.registry)
+router.registry.extend(reports_router.registry)
 router.registry.extend(tasks_router.registry)
+router.registry.extend(work_order_router.registry)
 
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api-token-auth/', obtain_jwt_token),
+    url(r'^download/', download_file),
     url(r'^docs/', include_docs_urls("ykyk")),
 ]
