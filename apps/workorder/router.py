@@ -6,7 +6,9 @@ from .views import (WorkOrderTaskViewset,
                     WorkOrderTypeViewset,
                     WorkOrderFlowTypeViewset,
                     WorkOrderProjectViewset,
-                    WorkOrderModelViewset)
+                    WorkOrderModelViewset,
+                    AuditWorkOrderTaskListViewset,
+                    ExecWorkOrderTaskListViewset,)
 
 
 work_order_router = DefaultRouter()
@@ -15,6 +17,8 @@ work_order_router.register(r'workOrderOperation', WorkOrderOperationViewset, bas
 work_order_router.register(r'workOrderTaskFlowItem', WorkOrderTaskFlowItemViewset, base_name="workOrderTaskFlowItem")
 work_order_router.register(r'workOrderTaskFlow', WorkOrderTaskFlowViewset, base_name="workOrderTaskFlow")
 work_order_router.register(r'workOrderType', WorkOrderTypeViewset, base_name="workOrderType")
-work_order_router.register(r'WorkOrderFlowType', WorkOrderFlowTypeViewset, base_name="WorkOrderFlowType")
-work_order_router.register(r'WorkOrderProject', WorkOrderProjectViewset, base_name="WorkOrderProject")
-work_order_router.register(r'WorkOrderModel', WorkOrderModelViewset, base_name="WorkOrderModel")
+work_order_router.register(r'workOrderFlowType', WorkOrderFlowTypeViewset, base_name="workOrderFlowType")
+work_order_router.register(r'workOrderProject', WorkOrderProjectViewset, base_name="workOrderProject")
+work_order_router.register(r'workOrderModel', WorkOrderModelViewset, base_name="workOrderModel")
+work_order_router.register(r'auditWorkOrderTaskList', AuditWorkOrderTaskListViewset, base_name="auditWorkOrderTaskList")
+work_order_router.register(r'execWorkOrderTaskList', ExecWorkOrderTaskListViewset, base_name="execWorkOrderTaskList")

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Q
 from .models import (WorkOrderTask,
                      WorkOrderOperation,
                      WorkOrderTaskFlow,
@@ -182,8 +183,8 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
             return None
 
     def get_work_order_exec_flow(self, user_obj, instance):
-        exec_flow_item_querysets = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=
-                                                                        instance.order_model.order_flow_type.task_exec_flow)
+        exec_flow_item_querysets = WorkOrderTaskFlowItem.objects.filter(
+            belong_flow__exact=instance.order_model.order_flow_type.task_exec_flow)
         exec_flow_item_list = []
         current_exec_flow = {}
         for exec_flow_item_obj in exec_flow_item_querysets:
@@ -199,8 +200,8 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         return exec_flow_item_list, current_exec_flow
 
     def get_work_order_audit_flow(self, user_obj, instance):
-        audit_flow_item_querysets = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=
-                                                                         instance.order_model.order_flow_type.task_audit_flow)
+        audit_flow_item_querysets = WorkOrderTaskFlowItem.objects.filter(
+            belong_flow__exact=instance.order_model.order_flow_type.task_audit_flow)
         audit_flow_item_list = []
         current_audit_flow = {}
         for audit_flow_item_obj in audit_flow_item_querysets:
@@ -215,17 +216,42 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
                 current_audit_flow.update(current_audit_flow=audit_flow_items)
         return audit_flow_item_list, current_audit_flow
 
+    def get_work_order_opetaion_info(self,instance):
+        work_order_opration_record_queryset = WorkOrderOperation.objects.filter(
+            Q(work_order__exact=instance) & ~Q(ops_status__exact=15)).order_by("create_time")
+        work_order_opration_reply_queryset = WorkOrderOperation.objects.filter(
+            Q(work_order__exact=instance) & Q(ops_status__exact=15)).order_by("create_time")
+
+        operation_records = []
+        for q in work_order_opration_record_queryset:
+            operation_record = {
+                "ops_user": q.ops_user.username,
+                "ops_status": q.get_ops_status_display(),
+                "create_time": q.create_time.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            operation_records.append(operation_record)
+        operation_replys = []
+        for q in work_order_opration_reply_queryset:
+            operation_reply = {
+                "ops_user": q.ops_user.username,
+                "ops_status": q.get_ops_status_display(),
+                "ops_reply_content": q.ops_reply_content,
+                "create_time": q.create_time.strftime("%Y-%m-%d %H:%M:%S")
+            }
+            operation_replys.append(operation_reply)
+
+        return operation_records, operation_replys
+
     def to_representation(self, instance):
         ret = super(WorkOrderTaskSerializer, self).to_representation(instance)
         ret['order_model'] = instance.order_model.model_name
         ret['order_status'] = instance.get_order_status_display()
         ret['current_exec_user'] = self.get_user_info(instance.current_exec_user)
         ret['current_audit_user'] = self.get_user_info(instance.current_audit_user)
-        ret['exec_flow'], ret['current_exec_flow'] \
-            = self.get_work_order_exec_flow(instance.current_exec_user, instance)
-        ret['audit_flow'], ret['current_audit_flow'] \
-            = self.get_work_order_audit_flow(instance.current_audit_user, instance)
-
+        ret['exec_flow'], ret['current_exec_flow'] = self.get_work_order_exec_flow(instance.current_exec_user, instance)
+        ret['audit_flow'], ret['current_audit_flow'] = self.get_work_order_audit_flow(instance.current_audit_user,
+                                                                                      instance)
+        ret['operation_records'], ret['operation_replys'] = self.get_work_order_opetaion_info(instance)
         return ret
 
     class Meta:

@@ -207,7 +207,7 @@ class WorkOrderTask(models.Model):
                                            help_text='当前审核用户',
                                            verbose_name='当前审核用户',
                                            related_name='current_audit_user')
-    order_result = models.TextField('工单结果', default=None, help_text='工单结果')
+    order_result = models.TextField('工单结果', default=None, null=True, help_text='工单结果')
     order_status = models.IntegerField('工单状态', choices=ORDER_STATUS_CHOICE, default=1, help_text='工单状态')
 
     def __str__(self):
@@ -256,8 +256,8 @@ class WorkOrderOperation(models.Model):
     ops_reply_content = models.CharField('回复内容', max_length=200, null=True, help_text='回复内容')
     create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
 
-    def __str__(self):
-        return self.id
+    # def __str__(self):
+    #     return self.id
 
     class Meta:
         ordering = ['id']
