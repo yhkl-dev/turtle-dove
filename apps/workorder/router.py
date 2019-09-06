@@ -8,7 +8,9 @@ from .views import (WorkOrderTaskViewset,
                     WorkOrderProjectViewset,
                     WorkOrderModelViewset,
                     AuditWorkOrderTaskListViewset,
-                    ExecWorkOrderTaskListViewset,)
+                    ExecWorkOrderTaskListViewset,
+                    WorkOrderTaskStatusCodeViewset,
+                    WorkOrderTaskOperationStatusCodeViewset)
 
 
 work_order_router = DefaultRouter()
@@ -22,3 +24,5 @@ work_order_router.register(r'workOrderProject', WorkOrderProjectViewset, base_na
 work_order_router.register(r'workOrderModel', WorkOrderModelViewset, base_name="workOrderModel")
 work_order_router.register(r'auditWorkOrderTaskList', AuditWorkOrderTaskListViewset, base_name="auditWorkOrderTaskList")
 work_order_router.register(r'execWorkOrderTaskList', ExecWorkOrderTaskListViewset, base_name="execWorkOrderTaskList")
+work_order_router.register(r'workOrderTaskOperationStatusCode', WorkOrderTaskOperationStatusCodeViewset, base_name="workOrderTaskOperationStatusCode")
+work_order_router.register(r'workOrderTaskStatusCode', WorkOrderTaskStatusCodeViewset, base_name="workOrderTaskStatusCode")

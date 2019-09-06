@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 import uuid
 User = get_user_model()
 
+
 class WorkOrderProject(models.Model):
 
     project_name = models.CharField('项目名称', max_length=200, help_text='项目名称')
@@ -158,26 +159,43 @@ class WorkOrderModel(models.Model):
         db_table = 'work_order_model'
 
 
+class WorkOrderStatusCode(models.Model):
+
+    status_code = models.IntegerField('状态码', help_text='状态码', null=False)
+    status_name = models.CharField('状态名称', max_length=40, help_text='状态名称', null=False)
+    status_belong_table = models.CharField('所在表格', max_length=40, help_text='所在表格', null=False)
+
+    def __str__(self):
+        return "{}: [{}]".format(self.status_name, self.status_code)
+
+    class Meta:
+        ordering = ['id']
+        db_table = 'work_order_status_code'
+
+
+
 class WorkOrderTask(models.Model):
 
     '''
         工单内容表
     '''
+    ORDER_STATUS_CHOICE = WorkOrderStatusCode.objects.filter(status_belong_table__exact='work_order_task').values_list(
+        'status_code', 'status_name')
 
-    ORDER_STATUS_CHOICE = (
-        (1, '待提交'),
-        (2, '审核中'),
-        (3, '执行人确认中'),
-        (4, '执行人执行中'),
-        (5, '执行人延期执行中'),
-        (6, '执行完成,用户确认中'),
-        (7, '审核驳回,等待用户确认'),
-        (8, '执行驳回,等待用户确认'),
-        (9, '用户确认不通过,等待执行重做'),
-        (10, '完成关闭'),
-        (11, '驳回关闭'),
-        (12, '撤销关闭'),
-    )
+    # ORDER_STATUS_CHOICE = (
+    #     (1, '待提交'),
+    #     (2, '审核中'),
+    #     (3, '执行人确认中'),
+    #     (4, '执行人执行中'),
+    #     (5, '执行人延期执行中'),
+    #     (6, '执行完成,用户确认中'),
+    #     (7, '审核驳回,等待用户确认'),
+    #     (8, '执行驳回,等待用户确认'),
+    #     (9, '用户确认不通过,等待执行重做'),
+    #     (10, '完成关闭'),
+    #     (11, '驳回关闭'),
+    #     (12, '撤销关闭'),
+    # )
     order_task_id = models.UUIDField('工单ID', default=uuid.uuid4(), auto_created=True, help_text='工单ID')
     order_title = models.CharField('工单标题', max_length=100, help_text='工单标题')
     order_model = models.ForeignKey(WorkOrderModel,
@@ -223,23 +241,25 @@ class WorkOrderOperation(models.Model):
     '''
         工单操作表
     '''
-    OPS_STATUS_CHOICE = (
-        (1, '提交'),
-        (2, '审核通过'),
-        (3, '审核不通过'),
-        (4, '审核转发'),
-        (5, '确认执行'),
-        (6, '执行确认不通过'),
-        (7, '延期执行'),
-        (8, '执行完成'),
-        (9, '执行转发'),
-        (10, '用户确认不通过'),
-        (11, '关闭'),
-        (12, '重走流程'),
-        (13, '重新编辑'),
-        (14, '撤回工单'),
-        (15, '回复'),
-    )
+    OPS_STATUS_CHOICE = WorkOrderStatusCode.objects.filter(status_belong_table__exact='work_order_operation').values_list(
+        'status_code', 'status_name')
+    # OPS_STATUS_CHOICE = (
+    #     (1, '提交'),
+    #     (2, '审核通过'),
+    #     (3, '审核不通过'),
+    #     (4, '审核转发'),
+    #     (5, '确认执行'),
+    #     (6, '执行确认不通过'),
+    #     (7, '延期执行'),
+    #     (8, '执行完成'),
+    #     (9, '执行转发'),
+    #     (10, '用户确认不通过'),
+    #     (11, '关闭'),
+    #     (12, '重走流程'),
+    #     (13, '重新编辑'),
+    #     (14, '撤回工单'),
+    #     (15, '回复'),
+    # )
 
     work_order = models.ForeignKey(WorkOrderTask,
                                    on_delete=models.CASCADE, null=False,
@@ -253,7 +273,7 @@ class WorkOrderOperation(models.Model):
                                  verbose_name='执行用户',
                                  related_name='work_order_ops_user')
     ops_status = models.IntegerField('操作状态', choices=OPS_STATUS_CHOICE, help_text='操作状态')
-    ops_reply_content = models.CharField('回复内容', max_length=200, null=True, help_text='回复内容')
+    ops_reply_content = models.TextField('回复内容', null=True, help_text='回复内容')
     create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
 
     # def __str__(self):
@@ -262,3 +282,4 @@ class WorkOrderOperation(models.Model):
     class Meta:
         ordering = ['id']
         db_table = 'work_order_operation'
+

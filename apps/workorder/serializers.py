@@ -7,7 +7,7 @@ from .models import (WorkOrderTask,
                      WorkOrderFlowType,
                      WorkOrderType,
                      WorkOrderProject,
-                     WorkOrderModel)
+                     WorkOrderModel,)
 
 
 class WorkOrderTaskFlowItemSerializer(serializers.ModelSerializer):
@@ -196,7 +196,7 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
             }
             exec_flow_item_list.append(exec_flow_items)
             if user_obj is not None and exec_flow_item_obj.exec_user.id == user_obj.id:
-                current_exec_flow.update(current_exec_flow=exec_flow_items)
+                current_exec_flow = exec_flow_items
         return exec_flow_item_list, current_exec_flow
 
     def get_work_order_audit_flow(self, user_obj, instance):
@@ -213,7 +213,7 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
             }
             audit_flow_item_list.append(audit_flow_items)
             if user_obj is not None and audit_flow_item_obj.exec_user.id == user_obj.id:
-                current_audit_flow.update(current_audit_flow=audit_flow_items)
+                current_audit_flow = audit_flow_items
         return audit_flow_item_list, current_audit_flow
 
     def get_work_order_opetaion_info(self,instance):
@@ -226,7 +226,9 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         for q in work_order_opration_record_queryset:
             operation_record = {
                 "ops_user": q.ops_user.username,
-                "ops_status": q.get_ops_status_display(),
+                # "ops_status": q.get_ops_status_display(),
+                "ops_status": q.ops_status,
+                "ops_reply_content": q.ops_reply_content,
                 "create_time": q.create_time.strftime("%Y-%m-%d %H:%M:%S")
             }
             operation_records.append(operation_record)
@@ -234,7 +236,8 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         for q in work_order_opration_reply_queryset:
             operation_reply = {
                 "ops_user": q.ops_user.username,
-                "ops_status": q.get_ops_status_display(),
+                # "ops_status": q.get_ops_status_display(),
+                "ops_status": q.ops_status,
                 "ops_reply_content": q.ops_reply_content,
                 "create_time": q.create_time.strftime("%Y-%m-%d %H:%M:%S")
             }
@@ -245,7 +248,7 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super(WorkOrderTaskSerializer, self).to_representation(instance)
         ret['order_model'] = instance.order_model.model_name
-        ret['order_status'] = instance.get_order_status_display()
+        # ret['order_status'] = instance.get_order_status_display()
         ret['current_exec_user'] = self.get_user_info(instance.current_exec_user)
         ret['current_audit_user'] = self.get_user_info(instance.current_audit_user)
         ret['exec_flow'], ret['current_exec_flow'] = self.get_work_order_exec_flow(instance.current_exec_user, instance)
