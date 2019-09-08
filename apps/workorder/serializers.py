@@ -2,39 +2,45 @@ from rest_framework import serializers
 from django.db.models import Q
 from .models import (WorkOrderTask,
                      WorkOrderOperation,
-                     WorkOrderTaskFlow,
+                     TemplateWorkOrderTaskFlow,
+                     TemplateWorkOrderTaskFlowItem,
+                     TemplateWorkOrderFlowType,
+                     TemplateWorkOrderType,
+                     TemplateWorkOrderProject,
+                     TemplateWorkOrderModel,
                      WorkOrderTaskFlowItem,
-                     WorkOrderFlowType,
-                     WorkOrderType,
-                     WorkOrderProject,
-                     WorkOrderModel,)
+                     WorkOrderModel)
 
 
-class WorkOrderTaskFlowItemSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderTaskFlowItemSerializer(serializers.ModelSerializer):
     '''
         工单执行流程项序列化类
     '''
 
     def to_representation(self, instance):
-        ret = super(WorkOrderTaskFlowItemSerializer, self).to_representation(instance)
+        ret = super(TemplateWorkOrderTaskFlowItemSerializer, self).to_representation(instance)
         ret['belong_flow'] = instance.belong_flow.flow_name
         ret['exec_user'] = instance.exec_user.username
         return ret
 
     def validate(self, attrs):
-        task_flow_queryset = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=attrs.get("belong_flow")).values('exec_order')
+        task_flow_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(
+            belong_flow__exact=attrs.get("belong_flow")).values('exec_order')
+
         c = [q.get('exec_order') for q in task_flow_queryset]
-        if attrs.get("exec_order") in c:
-            raise serializers.ValidationError('Duplicated exec_order number')
+        users =  [q.get('exec_user') for q in task_flow_queryset]
+
+        if attrs.get("exec_order") in c or attrs.get("exec_order") in users:
+            raise serializers.ValidationError('Duplicated exec_order Or exec_user')
         else:
             return attrs
 
     class Meta:
-        model = WorkOrderTaskFlowItem
+        model = TemplateWorkOrderTaskFlowItem
         fields = "__all__"
 
 
-class WorkOrderTaskFlowSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderTaskFlowSerializer(serializers.ModelSerializer):
 
     '''
         工单执行流程序列化类
@@ -50,7 +56,8 @@ class WorkOrderTaskFlowSerializer(serializers.ModelSerializer):
                                             help_text="修改日期")
 
     def to_representation(self, instance):
-        task_flow_item_queryset = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance).order_by('exec_order')
+        task_flow_item_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance).order_by(
+            'exec_order')
         flow_item_sets = []
         for q in task_flow_item_queryset:
             flow_item = {
@@ -60,17 +67,17 @@ class WorkOrderTaskFlowSerializer(serializers.ModelSerializer):
                 "exec_user": q.exec_user.username
             }
             flow_item_sets.append(flow_item)
-        ret = super(WorkOrderTaskFlowSerializer, self).to_representation(instance)
+        ret = super(TemplateWorkOrderTaskFlowSerializer, self).to_representation(instance)
         ret['flow_type'] = instance.get_flow_type_display()
         ret['flow_item'] = flow_item_sets
         return ret
 
     class Meta:
-        model = WorkOrderTaskFlow
+        model = TemplateWorkOrderTaskFlow
         fields = '__all__'
 
 
-class WorkOrderFlowTypeSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderFlowTypeSerializer(serializers.ModelSerializer):
 
     '''
         工单执行流程类型序列化类
@@ -86,7 +93,7 @@ class WorkOrderFlowTypeSerializer(serializers.ModelSerializer):
                                             help_text="修改日期")
 
     def to_representation(self, instance):
-        ret = super(WorkOrderFlowTypeSerializer, self).to_representation(instance)
+        ret = super(TemplateWorkOrderFlowTypeSerializer, self).to_representation(instance)
         ret['flow_type_status'] = instance.get_flow_type_status_display()
         ret['task_exec_flow'] = instance.task_exec_flow.flow_name
         ret['task_audit_flow'] = instance.task_audit_flow.flow_name
@@ -94,11 +101,11 @@ class WorkOrderFlowTypeSerializer(serializers.ModelSerializer):
 
 
     class Meta:
-        model = WorkOrderFlowType
+        model = TemplateWorkOrderFlowType
         fields = "__all__"
 
 
-class WorkOrderTypeSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderTypeSerializer(serializers.ModelSerializer):
 
     '''
         工单类型序列化类
@@ -114,26 +121,26 @@ class WorkOrderTypeSerializer(serializers.ModelSerializer):
                                             help_text="修改日期")
 
     def to_representation(self, instance):
-        ret = super(WorkOrderTypeSerializer, self).to_representation(instance)
+        ret = super(TemplateWorkOrderTypeSerializer, self).to_representation(instance)
         ret['type_status'] = instance.get_type_status_display()
         return ret
 
     class Meta:
-        model = WorkOrderType
+        model = TemplateWorkOrderType
         fields = "__all__"
 
 
-class WorkOrderProjectSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderProjectSerializer(serializers.ModelSerializer):
 
     '''
         工单项目序列化类
     '''
     class Meta:
-        model = WorkOrderProject
+        model = TemplateWorkOrderProject
         fields = "__all__"
 
 
-class WorkOrderModelSerializer(serializers.ModelSerializer):
+class TemplateWorkOrderModelSerializer(serializers.ModelSerializer):
 
     '''
         工单模板序列化类
@@ -145,14 +152,14 @@ class WorkOrderModelSerializer(serializers.ModelSerializer):
                                                   help_text="创建日期")
 
     def to_representation(self, instance):
-        ret = super(WorkOrderModelSerializer,self).to_representation(instance)
+        ret = super(TemplateWorkOrderModelSerializer,self).to_representation(instance)
         ret['order_type'] = instance.order_type.type_name
         ret['order_flow_type'] = instance.order_flow_type.flow_type_name
         return ret
 
 
     class Meta:
-        model = WorkOrderModel
+        model = TemplateWorkOrderModel
         fields = '__all__'
 
 
@@ -174,11 +181,12 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
     created_user = serializers.HiddenField(
         default=serializers.CurrentUserDefault())
 
+    # order_model = serializers.HiddenField(default=None)
+
+
     def get_user_info(self, user_obj):
         try:
-            return {
-                'username': user_obj.username
-            }
+            return user_obj.username
         except Exception:
             return None
 
@@ -256,6 +264,39 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
                                                                                       instance)
         ret['operation_records'], ret['operation_replys'] = self.get_work_order_opetaion_info(instance)
         return ret
+
+    def create_work_order_flow_item(self):
+        pass
+
+    def create_work_order_flow_type(self):
+        pass
+
+    def create_work_order_flow(self):
+        pass
+
+    def create_work_order_type(self):
+        pass
+
+    def create_work_order_project(self):
+        pass
+
+    def create_work_order_model_instance(self, validated_data):
+        ## 创建的时候要创建一个工单模型的完整实例
+        order_model = WorkOrderModel()
+
+        template_order_model_obj = validated_data.get('template_order_model')
+        order_model.pk = template_order_model_obj.id
+        order_model.model_template = template_order_model_obj
+        order_model.order_type = template_order_model_obj.order_type
+        order_model.order_flow_type = template_order_model_obj.order_flow_type
+        order_model.model_create_time = validated_data.get('create_time')
+        print(order_model)
+        validated_data['order_model'] = order_model
+        return validated_data
+
+    def create(self, validated_data):
+        instance = self.Meta.model.objects.create(**validated_data)
+        return instance
 
     class Meta:
         model = WorkOrderTask

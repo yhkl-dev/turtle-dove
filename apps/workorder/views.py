@@ -1,27 +1,34 @@
 from .models import (WorkOrderTask,
                      WorkOrderOperation,
+                     TemplateWorkOrderTaskFlow,
+                     TemplateWorkOrderTaskFlowItem,
+                     TemplateWorkOrderFlowType,
+                     TemplateWorkOrderType,
+                     TemplateWorkOrderProject,
+                     TemplateWorkOrderModel,
+                     WorkOrderModel,
+                     WorkOrderStatusCode,
                      WorkOrderTaskFlow,
                      WorkOrderTaskFlowItem,
                      WorkOrderFlowType,
                      WorkOrderType,
                      WorkOrderProject,
-                     WorkOrderModel,
-                     WorkOrderStatusCode)
+                     )
 from .serializers import (WorkOrderOperationSerializer,
-                          WorkOrderTaskFlowItemSerializer,
-                          WorkOrderFlowTypeSerializer,
+                          TemplateWorkOrderTaskFlowItemSerializer,
+                          TemplateWorkOrderFlowTypeSerializer,
                           WorkOrderTaskSerializer,
-                          WorkOrderTaskFlowSerializer,
-                          WorkOrderTypeSerializer,
-                          WorkOrderProjectSerializer,
-                          WorkOrderModelSerializer)
+                          TemplateWorkOrderTaskFlowSerializer,
+                          TemplateWorkOrderTypeSerializer,
+                          TemplateWorkOrderProjectSerializer,
+                          TemplateWorkOrderModelSerializer)
 from rest_framework import viewsets, status, permissions, mixins
 from TurtleDove.paginations import Pagination
 from .filters import WorkOrderTaskFlowFilter
 from rest_framework.response import Response
 
 
-class WorkOrderTaskFlowViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTaskFlowViewset(viewsets.ModelViewSet):
     '''
         retrieve：
             返回指定工单工单流程信息
@@ -42,46 +49,46 @@ class WorkOrderTaskFlowViewset(viewsets.ModelViewSet):
             更新工单流程信息部分字段
     '''
 
-    queryset = WorkOrderTaskFlow.objects.all()
-    serializer_class = WorkOrderTaskFlowSerializer
+    queryset = TemplateWorkOrderTaskFlow.objects.all()
+    serializer_class = TemplateWorkOrderTaskFlowSerializer
     pagination_class = Pagination
-    filter_class = WorkOrderTaskFlowFilter
-    filter_fields = ('flow_name', "flow_type")
+    # filter_class = WorkOrderTaskFlowFilter
+    # filter_fields = ('flow_name', "flow_type")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        work_flow_item_queryset = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance)
+        work_flow_item_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance)
         for work_flow_item_obj in work_flow_item_queryset:
             work_flow_item_obj.delete()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class WorkOrderTaskFlowItemViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTaskFlowItemViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderTaskFlowItem.objects.all()
-    serializer_class = WorkOrderTaskFlowItemSerializer
+    queryset = TemplateWorkOrderTaskFlowItem.objects.all()
+    serializer_class = TemplateWorkOrderTaskFlowItemSerializer
     pagination_class = Pagination
 
 
-class WorkOrderFlowTypeViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderFlowTypeViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderFlowType.objects.all()
-    serializer_class = WorkOrderFlowTypeSerializer
+    queryset = TemplateWorkOrderFlowType.objects.all()
+    serializer_class = TemplateWorkOrderFlowTypeSerializer
     pagination_class = Pagination
 
 
-class WorkOrderTypeViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTypeViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderType.objects.all()
-    serializer_class = WorkOrderTypeSerializer
+    queryset = TemplateWorkOrderType.objects.all()
+    serializer_class = TemplateWorkOrderTypeSerializer
     pagination_class = Pagination
 
 
-class WorkOrderProjectViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderProjectViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderProject.objects.all()
-    serializer_class = WorkOrderProjectSerializer
+    queryset = TemplateWorkOrderProject.objects.all()
+    serializer_class = TemplateWorkOrderProjectSerializer
     pagination_class = Pagination
 
 
@@ -96,6 +103,7 @@ class WorkOrderTaskStatusCodeViewset(viewsets.ViewSet, mixins.ListModelMixin):
             'status_code', 'status_name')
         }
         return Response(data, status=status.HTTP_200_OK)
+
 
 class WorkOrderTaskOperationStatusCodeViewset(viewsets.ViewSet, mixins.ListModelMixin):
 
@@ -227,10 +235,10 @@ class ExecWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet, ):
         return work_order_task_list
 
 
-class WorkOrderModelViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderModelViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderModel.objects.all()
-    serializer_class = WorkOrderModelSerializer
+    queryset = TemplateWorkOrderModel.objects.all()
+    serializer_class = TemplateWorkOrderModelSerializer
     pagination_class = Pagination
 
 
@@ -285,7 +293,7 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
         if operation_code == 1:
             if work_order_task_obj.order_status == 1:
                 work_order_task_obj.order_status=2
-                work_order_task_obj.current_audit_user = work_order_audit_flow[0].exec_user
+                work_order_task_obj.current_audit_user = work_order_audit_flow[0]
                 work_order_task_obj.save()
                 # 提交 -> 审核中
                 return True
