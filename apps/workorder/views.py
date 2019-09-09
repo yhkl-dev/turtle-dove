@@ -1,27 +1,31 @@
 from .models import (WorkOrderTask,
                      WorkOrderOperation,
-                     WorkOrderTaskFlow,
+                     TemplateWorkOrderTaskFlow,
+                     TemplateWorkOrderTaskFlowItem,
+                     TemplateWorkOrderFlowType,
+                     TemplateWorkOrderType,
+                     TemplateWorkOrderProject,
+                     TemplateWorkOrderModel,
+                     WorkOrderStatusCode,
                      WorkOrderTaskFlowItem,
                      WorkOrderFlowType,
-                     WorkOrderType,
-                     WorkOrderProject,
-                     WorkOrderModel,
-                     WorkOrderStatusCode)
+                     WorkOrderModel)
 from .serializers import (WorkOrderOperationSerializer,
-                          WorkOrderTaskFlowItemSerializer,
-                          WorkOrderFlowTypeSerializer,
+                          TemplateWorkOrderTaskFlowItemSerializer,
                           WorkOrderTaskSerializer,
-                          WorkOrderTaskFlowSerializer,
-                          WorkOrderTypeSerializer,
-                          WorkOrderProjectSerializer,
-                          WorkOrderModelSerializer)
+                          TemplateWorkOrderTaskFlowSerializer,
+                          TemplateWorkOrderFlowTypeSerializer,
+                          TemplateWorkOrderTypeSerializer,
+                          TemplateWorkOrderProjectSerializer,
+                          TemplateWorkOrderModelSerializer,
+                          WorkOrderStatusCodeSerializer)
 from rest_framework import viewsets, status, permissions, mixins
 from TurtleDove.paginations import Pagination
 from .filters import WorkOrderTaskFlowFilter
 from rest_framework.response import Response
 
 
-class WorkOrderTaskFlowViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTaskFlowViewset(viewsets.ModelViewSet):
     '''
         retrieve：
             返回指定工单工单流程信息
@@ -42,72 +46,79 @@ class WorkOrderTaskFlowViewset(viewsets.ModelViewSet):
             更新工单流程信息部分字段
     '''
 
-    queryset = WorkOrderTaskFlow.objects.all()
-    serializer_class = WorkOrderTaskFlowSerializer
+    queryset = TemplateWorkOrderTaskFlow.objects.all()
+    serializer_class = TemplateWorkOrderTaskFlowSerializer
     pagination_class = Pagination
-    filter_class = WorkOrderTaskFlowFilter
-    filter_fields = ('flow_name', "flow_type")
+    # filter_class = WorkOrderTaskFlowFilter
+    # filter_fields = ('flow_name', "flow_type")
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        work_flow_item_queryset = WorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance)
+        work_flow_item_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(belong_flow__exact=instance)
         for work_flow_item_obj in work_flow_item_queryset:
             work_flow_item_obj.delete()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class WorkOrderTaskFlowItemViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTaskFlowItemViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderTaskFlowItem.objects.all()
-    serializer_class = WorkOrderTaskFlowItemSerializer
+    '''
+        工单任务流程项
+    '''
+
+    queryset = TemplateWorkOrderTaskFlowItem.objects.all()
+    serializer_class = TemplateWorkOrderTaskFlowItemSerializer
     pagination_class = Pagination
 
 
-class WorkOrderFlowTypeViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderFlowTypeViewset(viewsets.ModelViewSet):
+    '''
+        工单流程类型
+    '''
 
-    queryset = WorkOrderFlowType.objects.all()
-    serializer_class = WorkOrderFlowTypeSerializer
+    queryset = TemplateWorkOrderFlowType.objects.all()
+    serializer_class = TemplateWorkOrderFlowTypeSerializer
     pagination_class = Pagination
 
 
-class WorkOrderTypeViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderTypeViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderType.objects.all()
-    serializer_class = WorkOrderTypeSerializer
+    '''
+        工单类型
+    '''
+
+    queryset = TemplateWorkOrderType.objects.all()
+    serializer_class = TemplateWorkOrderTypeSerializer
     pagination_class = Pagination
 
 
-class WorkOrderProjectViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderProjectViewset(viewsets.ModelViewSet):
+    '''
+        项目
+    '''
 
-    queryset = WorkOrderProject.objects.all()
-    serializer_class = WorkOrderProjectSerializer
+    queryset = TemplateWorkOrderProject.objects.all()
+    serializer_class = TemplateWorkOrderProjectSerializer
     pagination_class = Pagination
 
 
-class WorkOrderTaskStatusCodeViewset(viewsets.ViewSet, mixins.ListModelMixin):
+class WorkOrderTaskStatusCodeViewset(viewsets.ReadOnlyModelViewSet):
 
     permission_classes = (permissions.IsAuthenticated, )
+    queryset = WorkOrderStatusCode.objects.filter(
+        status_belong_table__exact='work_order_task')
+    serializer_class = WorkOrderStatusCodeSerializer
+    pagination_class = None
 
-    def list(self, request, *args, **kwargs):
-        data= {
-            'code': WorkOrderStatusCode.objects.filter(
-            status_belong_table__exact='work_order_task').values_list(
-            'status_code', 'status_name')
-        }
-        return Response(data, status=status.HTTP_200_OK)
 
-class WorkOrderTaskOperationStatusCodeViewset(viewsets.ViewSet, mixins.ListModelMixin):
+class WorkOrderTaskOperationStatusCodeViewset(viewsets.ReadOnlyModelViewSet):
 
+    queryset = WorkOrderStatusCode.objects.filter(
+            status_belong_table__exact='work_order_operation')
+    serializer_class = WorkOrderStatusCodeSerializer
     permission_classes = (permissions.IsAuthenticated, )
-
-    def list(self, request, *args, **kwargs):
-        data= {
-            'code': WorkOrderStatusCode.objects.filter(
-            status_belong_table__exact='work_order_operation').values_list(
-            'status_code', 'status_name')
-        }
-        return Response(data, status=status.HTTP_200_OK)
+    pagination_class = None
 
 
 class WorkOrderTaskViewset(viewsets.ModelViewSet):
@@ -120,7 +131,6 @@ class WorkOrderTaskViewset(viewsets.ModelViewSet):
         user = self.request.user
         queryset = super(WorkOrderTaskViewset, self).get_queryset()
         return queryset.filter(created_user=user)
-
 
 
 class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
@@ -227,14 +237,14 @@ class ExecWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet, ):
         return work_order_task_list
 
 
-class WorkOrderModelViewset(viewsets.ModelViewSet):
+class TemplateWorkOrderModelViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderModel.objects.all()
-    serializer_class = WorkOrderModelSerializer
+    queryset = TemplateWorkOrderModel.objects.all()
+    serializer_class = TemplateWorkOrderModelSerializer
     pagination_class = Pagination
 
 
-class WorkOrderOperationViewset(viewsets.ModelViewSet):
+class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin):
 
     queryset = WorkOrderOperation.objects.all()
     serializer_class = WorkOrderOperationSerializer
@@ -256,36 +266,24 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
             return Response({"error": self.error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     def _get_audit_flow(self, instance) -> list:
-        # instance = WorkOrderTask.objects.get(pk=work_order_pk)
-        audit_user_list = []
-        queryset = instance.order_model.order_flow_type.task_audit_flow.belong_flow.all().order_by("exec_order")
-        for q in queryset:
-            audit_user_list.append(q.exec_user)
-        print(audit_user_list)
-        return audit_user_list
+        return instance.order_model.order_flow_type.task_audit_flow.belong_flow.all().order_by("exec_order")
 
     def _get_exec_flow(self, instance) -> list:
-        # instance = WorkOrderTask.objects.get(pk=work_order_pk)
-        exec_user_list = []
-        queryset = instance.order_model.order_flow_type.task_audit_flow.belong_flow.all().order_by("exec_order")
-        for q in queryset:
-            exec_user_list.append(q.exec_user)
-        print(exec_user_list)
-        return exec_user_list
+        return instance.order_model.order_flow_type.task_exec_flow.belong_flow.all().order_by("exec_order")
 
     def send_message_to_user(self, user, **kwargs):
         pass
-
 
     def _change_work_order_task_status(self, operation_code:int, work_order_pk:int) -> bool:
         current_operation_user = self.request.user
         work_order_task_obj = WorkOrderTask.objects.get(pk=work_order_pk)
         work_order_audit_flow = list(self._get_audit_flow(instance=work_order_task_obj))
         work_order_exec_flow = list(self._get_exec_flow(instance=work_order_task_obj))
-        if operation_code == 1:
+        if operation_code == 1 and current_operation_user == work_order_task_obj.created_user:
             if work_order_task_obj.order_status == 1:
                 work_order_task_obj.order_status=2
-                work_order_task_obj.current_audit_user = work_order_audit_flow[0].exec_user
+                current_audit_flow_item_obj = work_order_audit_flow[0]
+                work_order_task_obj.current_audit_user = current_audit_flow_item_obj.exec_user
                 work_order_task_obj.save()
                 # 提交 -> 审核中
                 return True
@@ -296,10 +294,16 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
             # 这里其实分情况讨论
             # 如果当前执行用户是审核列表的最后一个人
             # 审核通过 -> 执行人确认 这里需要校验 当前工单的状态
-            if current_operation_user == work_order_audit_flow[-1] :
+            if current_operation_user == work_order_audit_flow[-1].exec_user :
                 if work_order_task_obj.order_status != 3:
                     work_order_task_obj.order_status=3
-                    work_order_task_obj.current_exec_user = work_order_exec_flow[0]
+                    current_audit_flow_item_obj = work_order_audit_flow[-1]
+                    current_audit_flow_item_obj.ops_status = 2
+
+                    current_exec_flow_item_obj = work_order_exec_flow[0]
+
+                    work_order_task_obj.current_exec_user = current_exec_flow_item_obj.exec_user
+                    current_audit_flow_item_obj.save()
                     work_order_task_obj.save()
                     return True
                 else:
@@ -308,63 +312,118 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
             else:
                 # 如果当前审核用户不是审核列表的最后一个人， 审核通过 转至 下一个审核人处理
                 work_order_task_obj.order_status = 2
-                work_order_task_obj.current_audit_user = work_order_audit_flow[work_order_audit_flow.index(current_operation_user) + 1]
+                work_order_audit_flow_user = [q.exec_user for q in work_order_audit_flow]
+                current_ptr = work_order_audit_flow_user.index(current_operation_user)
+                next_ptr = current_ptr + 1
+                current_audit_flow = work_order_audit_flow[current_ptr]
+                current_audit_flow.ops_status = 2
+                current_audit_flow.save()
+                next_audit_flow = work_order_audit_flow[next_ptr]
+                work_order_task_obj.current_audit_user = next_audit_flow.exec_user
                 work_order_task_obj.save()
                 return True
+
         if operation_code == 3 and current_operation_user == work_order_task_obj.current_audit_user:
-            work_order_task_obj.order_status=7
+            work_order_task_obj.order_status = 7
+            work_order_audit_flow_user = [q.exec_user for q in work_order_audit_flow]
+            current_ptr = work_order_audit_flow_user.index(current_operation_user)
+            current_audit_flow = work_order_audit_flow[current_ptr]
+            current_audit_flow.ops_status = 3
+            current_audit_flow.save()
             # 审核不通过 -> 审核驳回,等待用户确认
             work_order_task_obj.save()
             return True
         # 4 这个位置逻辑有问题， 已经写好的流程，转发的时候， 如果不在列表里面 相关的用户可能收不到 这里可能需要修改表结构了
         if operation_code == 4 and current_operation_user == work_order_task_obj.current_audit_user:
-            work_order_task_obj.order_status=2
+            work_order_task_obj.order_status = 2
             # 审核转发 -> 审核中
+
             work_order_task_obj.save()
             return True
         if operation_code == 5 and current_operation_user == work_order_task_obj.current_exec_user:
-            work_order_task_obj.order_status=4
+            work_order_task_obj.order_status = 4
             # 确认执行 -> 执行人执行中
+
+            work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
+            print(work_order_exec_flow_user)
+            current_ptr = work_order_exec_flow_user.index(current_operation_user)
+            print(work_order_exec_flow_user)
+            print('current_ptr', current_ptr)
+            current_audit_flow_item = work_order_exec_flow[current_ptr]
+            current_audit_flow_item.ops_status = 5
+            current_audit_flow_item.save()
             work_order_task_obj.save()
             return True
         if operation_code == 6 and current_operation_user == work_order_task_obj.current_exec_user :
             work_order_task_obj.order_status=8
             # 执行确认不通过 -> 执行驳回,等待用户确认
+            work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
+            current_ptr = work_order_exec_flow_user.index(current_operation_user)
+            current_audit_flow_item = work_order_exec_flow[current_ptr]
+            current_audit_flow_item.ops_status = 6
+            current_audit_flow_item.save()
             work_order_task_obj.save()
             return True
         if operation_code == 7 and current_operation_user == work_order_task_obj.current_exec_user:
             work_order_task_obj.order_status=5
+            work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
+            current_ptr = work_order_exec_flow_user.index(current_operation_user)
+            current_audit_flow_item = work_order_exec_flow[current_ptr]
+            current_audit_flow_item.ops_status = 7
+            current_audit_flow_item.save()
             # 延期执行 -> 执行人延期执行中
             work_order_task_obj.save()
             return True
         if operation_code == 8 and current_operation_user == work_order_task_obj.current_exec_user:
-            if current_operation_user == work_order_exec_flow[-1]:
+            if current_operation_user == work_order_exec_flow[-1].exec_user:
                 # 执行完成 -> 执行完成,用户确认中
-                work_order_task_obj.order_status=6
+                if work_order_task_obj.order_status in [6, 8, 9, 11, 12, 13, 14]:
+                    self.error_message = '当前不允许此操作'
+                    return False
+                work_order_task_obj.order_status = 6
+                work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
+                current_ptr = work_order_exec_flow_user.index(current_operation_user)
+                current_exec_flow_item = work_order_exec_flow[current_ptr]
+                current_exec_flow_item.ops_status = 8
+
+                # work_order_task_obj.save()
                 if self.request.data.get('ops_reply_content') is None:
                     self.error_message = '执行结果不能为空'
                     return False
                 else:
                     work_order_task_obj.order_result = self.request.data.get('ops_reply_content')
-                    work_order_task_obj.save()
-                    return True
+                current_exec_flow_item.save()
+                work_order_task_obj.save()
+                return True
             else:
                 work_order_task_obj.order_status = 3
                 # 当前执行人完成， 发给下一个执行人， 等待下一个执行人确认
-                work_order_task_obj.current_exec_user = work_order_exec_flow[work_order_exec_flow.index(current_operation_user) + 1]
+                work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
+                current_ptr = work_order_exec_flow_user.index(current_operation_user)
+                next_ptr = current_ptr + 1
+                current_exec_flow_item = work_order_exec_flow[current_ptr]
+                current_exec_flow_item.ops_status = 8
+                current_exec_flow_item.save()
+                next_exec_flow_item = work_order_exec_flow[next_ptr]
+                work_order_task_obj.current_exec_user = next_exec_flow_item.exec_user
+                print("当前处理用户", work_order_task_obj.current_exec_user)
                 # 执行完成需要给用户发消息确认 同时将结果添加至工单任务表的结果中
                 work_order_task_obj.save()
                 return True
         # 这个有问题，先不用
         if operation_code == 9 and current_operation_user == work_order_task_obj.current_exec_user:
-            work_order_task_obj.order_status=3
+            work_order_task_obj.order_status = 3
             # 执行转发 -> 执行人确认中
             work_order_task_obj.save()
             return True
         if operation_code == 10 and current_operation_user == work_order_task_obj.created_user:
-            work_order_task_obj.order_status=9
+            work_order_task_obj.order_status = 9
             # 用户确认不通过 -> 用户确认不通过,等待执行重做
             # 给执行用户发送消息， 告知执行结果不通过， 流程返回至 第一执行人
+            work_order_task_obj.current_exec_user = work_order_exec_flow[0].exec_user
+            for q in work_order_exec_flow:
+                q.ops_status = None
+                q.save()
             work_order_task_obj.save()
             return True
         if operation_code == 11 and current_operation_user == work_order_task_obj.created_user:
@@ -382,12 +441,18 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
             if work_order_task_obj.order_status == 9:
                 # 重走流程 -> 如果是 用户确认不通过,等待执行重做
                 work_order_task_obj.order_status=3
-                work_order_task_obj.current_exec_user = work_order_exec_flow[0]
+                work_order_task_obj.current_exec_user = work_order_exec_flow[0].exec_user
+                for q in work_order_exec_flow:
+                    q.ops_status = None
+                    q.save()
                 work_order_task_obj.save()
                 return True
             if work_order_task_obj.order_status == 7 :
                 work_order_task_obj.order_status=2
-                work_order_task_obj.current_audit_user = work_order_audit_flow[0]
+                work_order_task_obj.current_audit_user = work_order_audit_flow[0].exec_user
+                for q in work_order_audit_flow:
+                    q.ops_status = None
+                    q.save()
                 # 如果工单状态 为审核驳回， 则重新进行审核
                 work_order_task_obj.save()
                 return True
@@ -395,15 +460,16 @@ class WorkOrderOperationViewset(viewsets.ModelViewSet):
             # 重新编辑工单的条件为 工单必须处于待提交 、 审核驳回， 执行驳回 这几种状态
             if work_order_task_obj.order_status in [1, 7 ,8 ]:
                 work_order_task_obj.order_status=1
-                work_order_task_obj.current_audit_user = work_order_audit_flow[0]
+                work_order_task_obj.current_audit_user = work_order_audit_flow[0].exec_user
                 work_order_task_obj.current_exec_user = None
                 work_order_task_obj.save()
                 return True
         if operation_code == 14 and current_operation_user == work_order_task_obj.created_user:
             # 用户确认后再向工单表中插入相关用户数据 比如 审核， 执行等动作
             # 撤回工单的条件为，当前审核流程 第一审核用户未审核， 也就是说 current_audit_user 为空
-            if work_order_task_obj.order_status == 2 and work_order_task_obj.current_audit_user is None:
-                work_order_task_obj.order_status=1
+            if work_order_task_obj.order_status == 2 and work_order_audit_flow[0].ops_status is None:
+                work_order_task_obj.order_status = 1
+                work_order_task_obj.current_audit_user = None
                 work_order_task_obj.save()
                 return True
         if operation_code == 15:
