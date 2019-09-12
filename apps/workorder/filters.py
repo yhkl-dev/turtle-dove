@@ -1,5 +1,7 @@
 import django_filters
-from .models import WorkOrderTaskFlow
+from django.db.models import Q
+from .models import WorkOrderTaskFlow, WorkOrderTask
+import uuid
 
 
 class WorkOrderTaskFlowFilter(django_filters.rest_framework.FilterSet):
@@ -21,20 +23,25 @@ class WorkOrderTaskFlowFilter(django_filters.rest_framework.FilterSet):
         fields = ['flow_name', "flow_type"]
 
 
-# class ResourceUserFilter(django_filters.rest_framework.FilterSet):
-#     """
-#     资源过滤类
-#     """
-#
-#     user_name = django_filters.CharFilter(method="search_user_name")
-#     belong_resource = django_filters.NumberFilter(method="search_belong_resource")
-#
-#     def search_user_name(self, queryset, name, value):
-#         return queryset.filter(user_name__exact=value)
-#
-#     def search_belong_resource(self, queryset, name, value):
-#         return queryset.filter(belong_resource__exact=value)
-#
-#     class Meta:
-#         model = ResourceUser
-#         fields = ['user_name', "belong_resource"]
+class WorkOrderTaskFilter(django_filters.rest_framework.FilterSet):
+    """
+    资源过滤类
+    """
+
+    order_task_id = django_filters.UUIDFilter(method="search_order_task_id")
+    order_title = django_filters.CharFilter(method="search_order_title")
+    template_order_model = django_filters.NumberFilter(method="search_template_order_model")
+
+    def search_order_task_id(self, queryset, name, value):
+        return queryset.filter(order_task_id__exact=value)
+
+    def search_order_title(self, queryset, name, value):
+        return queryset.filter(order_title__icontains=value)
+
+    def search_template_order_model(self, queryset, name, value):
+        return queryset.filter(template_order_model__exact=value)
+
+    class Meta:
+        model = WorkOrderTask
+        fields = ['order_task_id', 'order_title', 'template_order_model']
+        # fields = [ 'order_title', 'template_order_model']

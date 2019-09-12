@@ -21,7 +21,7 @@ from .serializers import (WorkOrderOperationSerializer,
                           WorkOrderStatusCodeSerializer)
 from rest_framework import viewsets, status, permissions, mixins
 from TurtleDove.paginations import Pagination
-from .filters import WorkOrderTaskFlowFilter
+from .filters import WorkOrderTaskFlowFilter, WorkOrderTaskFilter
 from rest_framework.response import Response
 
 
@@ -126,6 +126,10 @@ class WorkOrderTaskViewset(viewsets.ModelViewSet):
     queryset = WorkOrderTask.objects.all()
     serializer_class = WorkOrderTaskSerializer
     pagination_class = Pagination
+    filter_class = WorkOrderTaskFilter
+
+    # filter_fields = ('order_title', 'template_order_model')
+    filter_fields = ('order_title', 'order_task_id' 'template_order_model')
 
     def get_queryset(self):
         user = self.request.user

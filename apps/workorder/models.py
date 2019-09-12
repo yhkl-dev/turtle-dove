@@ -169,6 +169,10 @@ class TemplateWorkOrderModel(models.Model):
     """
         工单模板
     """
+    MODEL_STATUS = (
+        (0, '禁用'),
+        (1, '启用')
+    )
     model_name = models.CharField('模板名称', max_length=200, help_text='模板名称', db_index=True, unique=True)
     order_type = models.ForeignKey(TemplateWorkOrderType,
                                    on_delete=models.CASCADE,
@@ -182,7 +186,9 @@ class TemplateWorkOrderModel(models.Model):
                                         help_text='工单流程类型',
                                         verbose_name='工单流程类型',
                                         related_name='order_flow_type')
+    mode_status = models.IntegerField('状态', choices=MODEL_STATUS, default=1, help_text='状态')
     model_create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
+
 
     def __str__(self):
         return self.model_name
@@ -343,7 +349,10 @@ class WorkOrderModel(models.Model):
     """
         工单模板实例
     """
-    # inherit_model_template = models.IntegerField('继承模板', help_text='继承模板')
+    MODEL_STATUS = (
+        (0, '禁用'),
+        (1, '启用')
+    )
     # 每次新建工单时，copy 一个模型实例到对应对象中， 以后操作全部在实例中完成，模板本身不动
     model_name = models.CharField('模板名称', max_length=200, help_text='模板名称')
     order_type = models.ForeignKey(WorkOrderType,
@@ -358,7 +367,9 @@ class WorkOrderModel(models.Model):
                                         help_text='工单流程类型',
                                         verbose_name='工单流程类型',
                                         related_name='order_flow_type')
+    mode_status = models.IntegerField('状态', choices=MODEL_STATUS, default=1, help_text='状态')
     model_create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
+
 
     def __str__(self):
         return self.model_name

@@ -34,18 +34,18 @@ class TemplateWorkOrderTaskFlowItemSerializer(serializers.ModelSerializer):
         ret['exec_user'] = instance.exec_user.username
         return ret
 
-    def validate(self, attrs):
-        task_flow_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(
-            belong_flow__exact=attrs.get("belong_flow")).values('exec_order')
-        c = [q.get('exec_order') for q in task_flow_queryset]
-        users = [q.get('exec_user') for q in task_flow_queryset]
-
-        if attrs.get("exec_order") in c:
-            raise serializers.ValidationError('Duplicated exec_order')
-        elif attrs.get("exec_user") in users:
-            raise serializers.ValidationError('Duplicated exec_user')
-        else:
-            return attrs
+    # def validate(self, attrs):
+    #     task_flow_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(
+    #         Q(belong_flow__exact=attrs.get("belong_flow")) & ~Q(exec_user=attrs.get('exec_user'))).values('exec_order')
+    #     c = [q.get('exec_order') for q in task_flow_queryset]
+    #     users = [q.get('exec_user') for q in task_flow_queryset]
+    #
+    #     if attrs.get("exec_order") in c:
+    #         raise serializers.ValidationError('Duplicated exec_order')
+    #     elif attrs.get("exec_user") in users:
+    #         raise serializers.ValidationError('Duplicated exec_user')
+    #     else:
+    #         return attrs
 
 
     class Meta:
@@ -106,9 +106,10 @@ class TemplateWorkOrderFlowTypeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(TemplateWorkOrderFlowTypeSerializer, self).to_representation(instance)
-        ret['flow_type_status'] = instance.get_flow_type_status_display()
-        ret['task_exec_flow'] = instance.task_exec_flow.flow_name
-        ret['task_audit_flow'] = instance.task_audit_flow.flow_name
+        # ret['flow_type_status'] = instance.get_flow_type_status_display()
+        ret['flow_type_status_name'] = instance.get_flow_type_status_display()
+        ret['task_exec_flow_name'] = instance.task_exec_flow.flow_name
+        ret['task_audit_flow_name'] = instance.task_audit_flow.flow_name
         return ret
 
 
@@ -134,7 +135,8 @@ class TemplateWorkOrderTypeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(TemplateWorkOrderTypeSerializer, self).to_representation(instance)
-        ret['type_status'] = instance.get_type_status_display()
+        # ret['type_status'] = instance.get_type_status_display()
+        ret['type_status_name'] = instance.get_type_status_display()
         return ret
 
     class Meta:
@@ -163,10 +165,60 @@ class TemplateWorkOrderModelSerializer(serializers.ModelSerializer):
                                                   read_only=True,
                                                   help_text="创建日期")
 
+    def get_order_type(self, order_type_obj):
+        try:
+            return {
+                "id": order_type_obj.id,
+                "type_name": order_type_obj.type_name,
+                # "type_status": order_type_obj.type_status,
+                "type_status_name": order_type_obj.get_type_status_display(),
+                "create_time": order_type_obj.create_time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+        except Exception:
+            return {}
+
+    def get_order_flow_type(self, order_flow_type_obj):
+        try:
+            return {
+                "flow_type_id": order_flow_type_obj.id,
+                "flow_type_name": order_flow_type_obj.flow_type_name,
+                # "flow_type_status": order_flow_type_obj.flow_type_status,
+                "flow_type_status_name": order_flow_type_obj.get_flow_type_status_display(),
+                "task_exec_flow": self.get_task_flow(order_flow_type_obj.task_exec_flow),
+                "task_exec_flow_items": self.get_flow_items(order_flow_type_obj.task_exec_flow),
+                "task_audit_flow": self.get_task_flow(order_flow_type_obj.task_audit_flow),
+                "task_audit_flow_items": self.get_flow_items(order_flow_type_obj.task_audit_flow)
+            }
+        except Exception as e:
+            return {}
+
+    def get_flow_items(self, order_flow_type_obj):
+        item_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(belong_flow__exact=order_flow_type_obj).order_by(
+            'exec_order')
+        item_list = []
+        for item_obj in item_queryset:
+            item = {
+                "flow_item_name": item_obj.flow_item_name,
+                "exec_order": item_obj.exec_order,
+                "exec_user": item_obj.exec_user.username
+            }
+            item_list.append(item)
+        return item_list
+
+    def get_task_flow(self, task_flow_obj):
+        try:
+            return {
+                "flow_name": task_flow_obj.flow_name,
+                "flow_type": task_flow_obj.flow_type,
+                "create_time": task_flow_obj.create_time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        except Exception:
+            return {}
+
     def to_representation(self, instance):
         ret = super(TemplateWorkOrderModelSerializer,self).to_representation(instance)
-        ret['order_type'] = instance.order_type.type_name
-        ret['order_flow_type'] = instance.order_flow_type.flow_type_name
+        ret['order_type_name'] = instance.order_type.type_name
+        ret['order_flow_type_name'] = instance.order_flow_type.flow_type_name
         return ret
 
 
