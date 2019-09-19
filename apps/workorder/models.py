@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 import uuid
+import datetime
+
+
 User = get_user_model()
 
 
@@ -37,8 +40,8 @@ class TemplateWorkOrderTaskFlow(models.Model):
         工单执行流程
     '''
     FLOW_TYPE_CHOICE = (
-        (0, 'executer'),
-        (1, 'audit')
+        (0, '执行'),
+        (1, '审核')
     )
 
     flow_name = models.CharField('流程名称', max_length=200, db_index=True, unique=True,  help_text='流程名称')
@@ -218,8 +221,8 @@ class WorkOrderTaskFlow(models.Model):
         工单执行流程
     '''
     FLOW_TYPE_CHOICE = (
-        (0, 'executer'),
-        (1, 'audit')
+        (0, '执行'),
+        (1, '审核')
     )
 
     flow_name = models.CharField('流程名称', max_length=200, help_text='流程名称')
@@ -401,7 +404,11 @@ class WorkOrderTask(models.Model):
         (11, '驳回关闭'),
         (12, '撤销关闭'),
     )
-    order_task_id = models.UUIDField('工单ID', default=uuid.uuid4(), auto_created=True, help_text='工单ID')
+    order_task_id = models.CharField('工单ID',
+                                     max_length=40,
+                                     db_index=True,
+                                     unique=True,
+                                     help_text='工单ID')
     order_title = models.CharField('工单标题', max_length=100, help_text='工单标题')
     template_order_model = models.ForeignKey(TemplateWorkOrderModel,
                                     on_delete=models.CASCADE,
@@ -444,7 +451,7 @@ class WorkOrderTask(models.Model):
         return "{}[{}]".format(self.order_title, self.order_task_id)
 
     class Meta:
-        ordering = ['create_time']
+        ordering = ['-update_time']
         db_table = 'work_order_task'
 
 
@@ -485,7 +492,7 @@ class WorkOrderOperation(models.Model):
                                  verbose_name='执行用户',
                                  related_name='work_order_ops_user')
     ops_status = models.IntegerField('操作状态', choices=OPS_STATUS_CHOICE, help_text='操作状态')
-    ops_reply_content = models.TextField('回复内容', null=True, help_text='回复内容')
+    ops_reply_content = models.TextField('回复内容', null=True, blank=True,  help_text='回复内容')
     create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
 
 

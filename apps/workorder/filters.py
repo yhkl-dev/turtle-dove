@@ -28,20 +28,24 @@ class WorkOrderTaskFilter(django_filters.rest_framework.FilterSet):
     资源过滤类
     """
 
-    order_task_id = django_filters.UUIDFilter(method="search_order_task_id")
-    order_title = django_filters.CharFilter(method="search_order_title")
+    order_task_id = django_filters.CharFilter(method="search_order_task_id")
+    order_title = django_filters.CharFilter(method="search_order_task_id")
     template_order_model = django_filters.NumberFilter(method="search_template_order_model")
+    create_time = django_filters.DateTimeFromToRangeFilter(field_name="create_time")
 
     def search_order_task_id(self, queryset, name, value):
-        return queryset.filter(order_task_id__exact=value)
-
-    def search_order_title(self, queryset, name, value):
-        return queryset.filter(order_title__icontains=value)
+        return queryset.filter(Q(order_task_id__exact=value)|Q(order_title__icontains=value))
 
     def search_template_order_model(self, queryset, name, value):
         return queryset.filter(template_order_model__exact=value)
 
+    # def search_create_time(self, queryset, name, value):
+    #     return queryset.filter(create_time__exact=value)
+    #
+    # def search_update_time(self, queryset, name, value):
+    #     return queryset.filter(update_time__exact=value)
+
     class Meta:
         model = WorkOrderTask
-        fields = ['order_task_id', 'order_title', 'template_order_model']
+        fields = ['order_task_id', 'order_title', 'template_order_model', 'create_time',]
         # fields = [ 'order_title', 'template_order_model']

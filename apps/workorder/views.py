@@ -8,6 +8,7 @@ from .models import (WorkOrderTask,
                      TemplateWorkOrderModel,
                      WorkOrderStatusCode,
                      WorkOrderTaskFlowItem,
+                     WorkOrderTaskFlow,
                      WorkOrderFlowType,
                      WorkOrderModel)
 from .serializers import (WorkOrderOperationSerializer,
@@ -22,7 +23,53 @@ from .serializers import (WorkOrderOperationSerializer,
 from rest_framework import viewsets, status, permissions, mixins
 from TurtleDove.paginations import Pagination
 from .filters import WorkOrderTaskFlowFilter, WorkOrderTaskFilter
+from django.db.models import Q
 from rest_framework.response import Response
+
+class WorkOrderHistoryCountViewSet(viewsets.ViewSet, mixins.ListModelMixin):
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def list(self, request, *args, **kwargs):
+        user = self.request.user
+        data = []
+        if user.username == 'admin':
+            sql = """
+                 SELECT
+                        wot.id,
+                        count( wom.model_name ) counts,
+                        wom.model_name 
+                    FROM
+                        work_order_task wot,
+                        work_order_model wom 
+                    WHERE
+                        wot.order_model_id = wom.id 
+                    GROUP BY
+                        wom.model_name
+            """
+        else:
+            sql = """
+                SELECT
+                       wot.id,
+                       count( wom.model_name ) counts,
+                       wom.model_name 
+                   FROM
+                       work_order_task wot,
+                       work_order_model wom 
+                   WHERE
+                       wot.order_model_id = wom.id 
+                       and wot.created_user_id = '{}'
+                   GROUP BY
+                       wom.model_name
+           """.format(user.id)
+        queryset = WorkOrderModel.objects.raw(sql)
+        for q in queryset:
+            info = {
+                "name": q.model_name,
+                "value": q.counts
+            }
+            data.append(info)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class TemplateWorkOrderTaskFlowViewset(viewsets.ModelViewSet):
@@ -123,13 +170,11 @@ class WorkOrderTaskOperationStatusCodeViewset(viewsets.ReadOnlyModelViewSet):
 
 class WorkOrderTaskViewset(viewsets.ModelViewSet):
 
-    queryset = WorkOrderTask.objects.all()
+    queryset = WorkOrderTask.objects.filter(~Q(order_status__in=[10, 11, 12]))
     serializer_class = WorkOrderTaskSerializer
     pagination_class = Pagination
     filter_class = WorkOrderTaskFilter
-
-    # filter_fields = ('order_title', 'template_order_model')
-    filter_fields = ('order_title', 'order_task_id' 'template_order_model')
+    filter_fields = ('order_task_id', 'order_title', 'template_order_model', 'create_time')
 
     def get_queryset(self):
         user = self.request.user
@@ -137,23 +182,110 @@ class WorkOrderTaskViewset(viewsets.ModelViewSet):
         return queryset.filter(created_user=user)
 
 
+class WorkOrderTaskHistoryViewset(viewsets.ModelViewSet):
+
+    queryset = WorkOrderTask.objects.filter(order_status__in=[10, 11, 12])
+    serializer_class = WorkOrderTaskSerializer
+    pagination_class = Pagination
+    filter_class = WorkOrderTaskFilter
+    filter_fields = ('order_task_id', 'order_title', 'template_order_model', 'create_time')
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super(WorkOrderTaskHistoryViewset, self).get_queryset()
+        if user.username == 'admin':
+            return queryset
+        else:
+            return queryset.filter(created_user=user)
+
+class WorkOrderTaskExecHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+
+    # queryset = WorkOrderTask.objects.filter(order_status__in=[10, 11, 12])
+    serializer_class = WorkOrderTaskSerializer
+    pagination_class = Pagination
+    filter_class = WorkOrderTaskFilter
+    filter_fields = ('order_task_id', 'order_title', 'template_order_model', 'create_time')
+
+    def get_queryset(self):
+        user = self.request.user
+        sql = '''
+            SELECT
+                wot.id
+            FROM
+                work_order_task wot,
+                work_order_model wom,
+                work_order_flow_type woft,
+                work_order_flow wof,
+                work_order_flow_item wofi 
+            WHERE
+                wot.order_model_id = wom.id 
+                AND wom.order_flow_type_id = woft.id 
+                AND woft.task_exec_flow_id = wof.id 
+                AND wof.id = wofi.belong_flow_id 
+                AND wot.order_status IN ( 10, 11, 12 ) 
+                and wofi.exec_user_id = '{}'
+        '''.format(user.id)
+        # queryset = super(WorkOrderTaskHistoryViewset, self).get_queryset()
+        query_list = WorkOrderTask.objects.raw(sql)
+        id_list = []
+        for q in query_list:
+            id_list.append(q.id)
+        queryset = WorkOrderTask.objects.filter(id__in=id_list).order_by('-update_time')
+        return queryset
+
+
+class WorkOrderTaskAuditHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+
+    # queryset = WorkOrderTask.objects.filter(order_status__in=[10, 11, 12])
+    serializer_class = WorkOrderTaskSerializer
+    pagination_class = Pagination
+    filter_class = WorkOrderTaskFilter
+    filter_fields = ('order_task_id', 'order_title', 'template_order_model', 'create_time')
+
+    def get_queryset(self):
+        user = self.request.user
+        sql = '''
+            SELECT
+                wot.id
+            FROM
+                work_order_task wot,
+                work_order_model wom,
+                work_order_flow_type woft,
+                work_order_flow wof,
+                work_order_flow_item wofi 
+            WHERE
+                wot.order_model_id = wom.id 
+                AND wom.order_flow_type_id = woft.id 
+                AND woft.task_audit_flow_id = wof.id 
+                AND wof.id = wofi.belong_flow_id 
+                AND wot.order_status IN ( 10, 11, 12 ) 
+                and wofi.exec_user_id = '{}'
+        '''.format(user.id)
+        # queryset = super(WorkOrderTaskHistoryViewset, self).get_queryset()
+        query_list = WorkOrderTask.objects.raw(sql)
+        id_list = []
+        for q in query_list:
+            id_list.append(q.id)
+        queryset = WorkOrderTask.objects.filter(id__in=id_list).order_by('-update_time')
+        return queryset
+
+
 class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
 
-    # queryset = get_audit_work_order_list()
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = WorkOrderTaskSerializer
     pagination_class = Pagination
 
     def get_queryset(self):
         user = self.request.user
-        queryset = self.get_audit_work_order_list(user)
-        return queryset
+        return WorkOrderTask.objects.filter(
+            Q(current_audit_user=user) & Q(order_status=2)).order_by('-update_time')
 
     def get_audit_work_order_list(self, user):
         # user = self.request.user
         # 首先根据用户查询 work_order_flow_item 里面有没有当前用户的 item
         work_order_flow_item_queryset = WorkOrderTaskFlowItem.objects.filter(exec_user=user)  # 得到 item 列表
-
+        print('work_order_flow_item_queryset', work_order_flow_item_queryset)
         work_flow_list = []
         for flow_item_obj in work_order_flow_item_queryset:
             work_flow_list.append(flow_item_obj.belong_flow)
@@ -181,8 +313,10 @@ class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
         work_order_task_list = []
         for work_order_model_obj in work_order_model_list:
             try:
-                work_order_task_obj_list = WorkOrderTask.objects.filter(order_model=work_order_model_obj)
-                for q in work_order_task_obj_list:
+                work_order_task_obj_list_queryset = WorkOrderTask.objects.filter(
+                    Q(order_model=work_order_model_obj) & Q(order_status__in=[2, 6, 7])).order_by('-update_time')
+                print(work_order_task_obj_list_queryset)
+                for q in work_order_task_obj_list_queryset:
                     if q not in work_order_task_list:
                         work_order_task_list.append(q)
             except Exception:
@@ -192,15 +326,14 @@ class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
 
 class ExecWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet, ):
 
-    # queryset = get_audit_work_order_list()
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = WorkOrderTaskSerializer
     pagination_class = Pagination
 
     def get_queryset(self):
         user = self.request.user
-        queryset = self.get_exect_work_order_list(user)
-        return queryset
+        return WorkOrderTask.objects.filter(
+            Q(current_exec_user=user) & Q(order_status__in=[3, 4, 5])).order_by('-update_time')
 
     def get_exect_work_order_list(self, user):
         # 首先根据用户查询 work_order_flow_item 里面有没有当前用户的 item
@@ -232,7 +365,8 @@ class ExecWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet, ):
         work_order_task_list = []
         for work_order_model_obj in work_order_model_list:
             try:
-                work_order_task_obj_list = WorkOrderTask.objects.filter(order_model=work_order_model_obj)
+                work_order_task_obj_list = WorkOrderTask.objects.filter(
+                    Q(order_model=work_order_model_obj) & Q(order_status__in=[3, 4, 5, 6, 8])).order_by('-update_time')
                 for q in work_order_task_obj_list:
                     if q not in work_order_task_list:
                         work_order_task_list.append(q)
@@ -359,7 +493,8 @@ class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin
             work_order_task_obj.save()
             return True
         if operation_code == 6 and current_operation_user == work_order_task_obj.current_exec_user :
-            work_order_task_obj.order_status=8
+            work_order_task_obj.order_status=6
+            # 这个代码是给 执行者 使用的， 如果执行不通过， 用户输入6 ， 状态变为 执行完成， 申请用户确认中
             # 执行确认不通过 -> 执行驳回,等待用户确认
             work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
             current_ptr = work_order_exec_flow_user.index(current_operation_user)
@@ -462,17 +597,17 @@ class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin
                 return True
         if operation_code == 13 and current_operation_user == work_order_task_obj.created_user:
             # 重新编辑工单的条件为 工单必须处于待提交 、 审核驳回， 执行驳回 这几种状态
-            if work_order_task_obj.order_status in [1, 7 ,8 ]:
+            if work_order_task_obj.order_status in [ 1, 7 ,8 ]:
                 work_order_task_obj.order_status=1
                 work_order_task_obj.current_audit_user = work_order_audit_flow[0].exec_user
                 work_order_task_obj.current_exec_user = None
                 work_order_task_obj.save()
                 return True
         if operation_code == 14 and current_operation_user == work_order_task_obj.created_user:
-            # 用户确认后再向工单表中插入相关用户数据 比如 审核， 执行等动作
+            # 用户确认后 再向工单表中插入相关用户数据 比如 审核， 执行等动作
             # 撤回工单的条件为，当前审核流程 第一审核用户未审核， 也就是说 current_audit_user 为空
             if work_order_task_obj.order_status == 2 and work_order_audit_flow[0].ops_status is None:
-                work_order_task_obj.order_status = 1
+                work_order_task_obj.order_status = 12 # 撤销关闭
                 work_order_task_obj.current_audit_user = None
                 work_order_task_obj.save()
                 return True

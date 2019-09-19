@@ -14,6 +14,7 @@ from .models import (WorkOrderTask,
                      WorkOrderTaskFlow,
                      WorkOrderType,
                      WorkOrderFlowType)
+import datetime
 
 
 class WorkOrderStatusCodeSerializer(serializers.ModelSerializer):
@@ -81,6 +82,7 @@ class TemplateWorkOrderTaskFlowSerializer(serializers.ModelSerializer):
             flow_item_sets.append(flow_item)
         ret = super(TemplateWorkOrderTaskFlowSerializer, self).to_representation(instance)
         ret['flow_type'] = instance.get_flow_type_display()
+        ret['flow_type_name'] = instance.flow_type
         ret['flow_item'] = flow_item_sets
         return ret
 
@@ -233,7 +235,7 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         工单任务序列化类
     '''
 
-    order_task_id = serializers.UUIDField(read_only=True)
+    order_task_id = serializers.HiddenField(default=None)
     create_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S",
                                             label="创建日期",
                                             read_only=True,
@@ -323,9 +325,11 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super(WorkOrderTaskSerializer, self).to_representation(instance)
         ret.pop('order_status')
+        ret['order_task_id'] = instance.order_task_id
         ret['order_model'] = instance.order_model.model_name
         ret['status_code'] = instance.order_status
         ret['status_name'] = instance.get_order_status_display()
+        ret['created_user'] = instance.created_user.username
         ret['current_exec_user'] = self.get_user_info(instance.current_exec_user)
         ret['current_audit_user'] = self.get_user_info(instance.current_audit_user)
         ret['exec_flow'], ret['current_exec_flow'] = self.get_work_order_exec_flow(instance.current_exec_user, instance)
@@ -411,9 +415,18 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         return order_model_obj
 
     def create(self, validated_data):
-        validated_data['order_model'] = self._create_order_model_instance(validated_data['template_order_model'])
+        validated_data['order_task_id'] = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+        order_model_obj = self._create_order_model_instance(validated_data['template_order_model'])
+        validated_data['order_model'] = order_model_obj
         instance = self.Meta.model.objects.create(**validated_data)
         return instance
+
+    def update(self, instance, validated_data):
+        order_model_obj = self._create_order_model_instance(validated_data['template_order_model'])
+        validated_data["order_model"] = order_model_obj
+        self.Meta.model.objects.filter(id=instance.id).update(**validated_data)
+        return instance
+
 
     class Meta:
         model = WorkOrderTask

@@ -10,7 +10,11 @@ from .views import (WorkOrderTaskViewset,
                     AuditWorkOrderTaskListViewset,
                     ExecWorkOrderTaskListViewset,
                     WorkOrderTaskStatusCodeViewset,
-                    WorkOrderTaskOperationStatusCodeViewset)
+                    WorkOrderTaskOperationStatusCodeViewset,
+                    WorkOrderTaskHistoryViewset,
+                    WorkOrderHistoryCountViewSet,
+                    WorkOrderTaskExecHistoryViewSet,
+                    WorkOrderTaskAuditHistoryViewSet)
 
 
 work_order_router = DefaultRouter()
@@ -26,3 +30,7 @@ work_order_router.register(r'auditWorkOrderTaskList', AuditWorkOrderTaskListView
 work_order_router.register(r'execWorkOrderTaskList', ExecWorkOrderTaskListViewset, base_name="execWorkOrderTaskList")
 work_order_router.register(r'workOrderTaskOperationStatusCode', WorkOrderTaskOperationStatusCodeViewset, base_name="workOrderTaskOperationStatusCode")
 work_order_router.register(r'workOrderTaskStatusCode', WorkOrderTaskStatusCodeViewset, base_name="workOrderTaskStatusCode")
+work_order_router.register(r'workOrderTaskHistory', WorkOrderTaskHistoryViewset, base_name="workOrderTaskHistory")
+work_order_router.register(r'workOrderHistoryCount', WorkOrderHistoryCountViewSet, base_name="WorkOrderHistoryCountViewSet")
+work_order_router.register(r'workOrderTaskExecHistory', WorkOrderTaskExecHistoryViewSet, base_name="workOrderTaskExecHistory")
+work_order_router.register(r'workOrderTaskAuditHistory', WorkOrderTaskAuditHistoryViewSet, base_name="workOrderTaskAuditHistory")
