@@ -6,7 +6,8 @@ from rest_framework import viewsets, mixins, permissions
 class ProjectViewSet(viewsets.GenericViewSet,
                      mixins.CreateModelMixin,
                      mixins.ListModelMixin,
-                     mixins.UpdateModelMixin, mixins.RetrieveModelMixin):
+                     mixins.UpdateModelMixin,
+                     mixins.RetrieveModelMixin):
 
     """
         list:

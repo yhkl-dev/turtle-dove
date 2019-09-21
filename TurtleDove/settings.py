@@ -32,6 +32,7 @@ ENCRYPT_KEY = 'passplatairtimes'.encode('utf-8')
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
+DOMAIN = '@ykyk.com'
 
 
 # Application definition
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'channels',
+    'gunicorn',
     'menu.apps.MenuConfig',
     'users.apps.UsersConfig',
     'groups.apps.GroupsConfig',
@@ -57,7 +59,8 @@ INSTALLED_APPS = [
     'opsdocs.apps.OpsdocsConfig',
     'autotask.apps.AutotaskConfig',
     'serverreports.apps.ServerreportsConfig',
-    'workorder.apps.WorkorderConfig'
+    'workorder.apps.WorkorderConfig',
+    'projectManager.apps.ProjectmanagerConfig'
 ]
 
 MIDDLEWARE = [

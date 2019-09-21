@@ -25,6 +25,38 @@ from TurtleDove.paginations import Pagination
 from .filters import WorkOrderTaskFlowFilter, WorkOrderTaskFilter
 from django.db.models import Q
 from rest_framework.response import Response
+from django.http import StreamingHttpResponse, HttpResponse
+from TurtleDove.settings import BASE_DIR
+import os
+import json
+
+def download_work_file(request):
+
+    def file_iterator(file_name,chunk_size=512):
+        with open(file_name, 'rb') as f:
+            while True:
+                c = f.read(chunk_size)
+                if c:
+                    yield c
+                else:
+                    break
+        print('下载 {} 完成'.format(file_name))
+
+    if request.method == 'GET':
+        file_name = request.GET['file_name']
+        the_file_name =  BASE_DIR +'/' + file_name
+        if not os.path.exists(the_file_name):
+            return HttpResponse('file not found', status.HTTP_404_NOT_FOUND)
+            # raise IOError("file not found!")
+        try:
+            response = StreamingHttpResponse(file_iterator(the_file_name))
+            response['Content-Type'] = 'application/octet-stream'
+            response['Content-Disposition'] = "attachment;filename={}".format(file_name)
+            return response
+        except Exception as e:
+            return HttpResponse(json.dumps({"success": False, "error": u"下载文件失败"}), status=500,
+                                content_type="text/json")
+
 
 class WorkOrderHistoryCountViewSet(viewsets.ViewSet, mixins.ListModelMixin):
 

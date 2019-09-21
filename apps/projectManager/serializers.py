@@ -18,9 +18,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         ret = super(ProjectSerializer, self).to_representation(instance)
         ret['project_name'] = "{}[{}]".format(instance.project_name_zh, instance.project_name_en)
         ret['configurations'] = configurations
-        ret.pop('project_name_zh')
         ret.pop('is_deleted')
-        ret.pop('project_name_en')
         return ret
 
 

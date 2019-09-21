@@ -10,7 +10,7 @@ class Project(models.Model):
     )
 
     project_name_en = models.CharField('项目名称(english)', max_length=100, help_text='项目名称(english)')
-    project_name_zh = models.CharField('项目名称(chinese)', max_length=100, help_text='项目名称(chinese')
+    project_name_zh = models.CharField('项目名称(chinese)', max_length=100,  help_text='项目名称(chinese')
     is_deleted = models.IntegerField('是否删除', choices=DELETE_PROJECT_STATUS, default=0, help_text='是否删除')
 
     def __str__(self):
@@ -34,3 +34,15 @@ class ProjectConfigure(models.Model):
     class Meta:
         ordering = ['id']
         db_table = 'projects_configure'
+
+
+class ProjectPlatformEnv(models.Model):
+
+    platform_name = models.CharField("平台名称", max_length=20, db_index=True, unique=True, help_text='平台名称')
+
+    def __str__(self):
+        return self.platform_name
+
+    class Meta:
+        ordering = ['id']
+        db_table = 'project_platform'

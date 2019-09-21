@@ -1,0 +1,23 @@
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (1, '/', 'plane', '首页', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (2, '/resources', 'list', '资源管理', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (3, '/product', 'user', '业务线', 1, 2);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (4, '/resourceList', 'user', '资源列表', 1, 2);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (6, '/webssh', NULL, 'WebSSH', 0, 2);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (8, '/report', 'documentation', '智能运维', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (9, '/server_report', NULL, '运维报告', 1, 8);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (10, '/monitor', 'monitor', '监控管理', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (11, '/zabbix', NULL, 'Zabbix', 1, 10);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (12, '/task', 'task', '配置中心', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (13, '/task_list', NULL, '任务列表', 1, 12);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (14, '/playbook', NULL, 'Playbook', 1, 12);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (15, '/users', 'user management', '用户管理', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (16, '/group/groupPermission', '', '权限列表', 0, 15);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (17, '/list', '', '用户列表', 1, 15);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (18, '/group', '', '角色', 1, 15);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (19, '/workorder', 'order', '工单', 1, NULL);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (20, '/to_do_list', NULL, '待处理列表', 1, 19);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (21, '/to_audit_list', NULL, '待审核列表', 1, 19);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (22, '/my_workorder', NULL, '我的工单', 1, 19);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (23, '/work_order_history', NULL, '工单历史', 1, 19);
+INSERT INTO `db_manager_v4`.`view_menu`(`id`, `path`, `icon`, `title`, `show`, `parent_id`) VALUES (24, '/work_order_model_manage', NULL, '模板管理', 1, 19);
+

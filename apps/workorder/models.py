@@ -1,8 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-import uuid
-import datetime
-
+from projectManager.models import Project, ProjectPlatformEnv
+from products.models import Product
 
 User = get_user_model()
 
@@ -404,10 +403,15 @@ class WorkOrderTask(models.Model):
         (11, '驳回关闭'),
         (12, '撤销关闭'),
     )
+
+    ORDER_ENV_CHOICE = (
+        (0, '后台'),
+        (1, '前端'),
+        (2, '安卓')
+    )
+
     order_task_id = models.CharField('工单ID',
                                      max_length=40,
-                                     db_index=True,
-                                     unique=True,
                                      help_text='工单ID')
     order_title = models.CharField('工单标题', max_length=100, help_text='工单标题')
     template_order_model = models.ForeignKey(TemplateWorkOrderModel,
@@ -429,7 +433,24 @@ class WorkOrderTask(models.Model):
                                      help_text='创建用户',
                                      verbose_name='创建用户',
                                      related_name='created_user')
+    order_project = models.ForeignKey(Project,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      help_text='项目名称',
+                                      verbose_name='工单申请项目')
+    order_products = models.ForeignKey(Product,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      help_text='工单项目环境',
+                                      verbose_name='工单项目环境')
+    # order_env_type = models.ManyToManyField(ProjectPlatformEnv,
+    #                                         verbose_name='部署平台',
+    #                                         blank=True,
+    #                                         related_name="env_set",
+    #                                         help_text='部署平台')
+    order_env_type = models.CharField('平台类型', max_length=20, default=None, help_text='平台类型')
     order_purpose = models.TextField('工单需求', help_text='工单需求')
+    order_files = models.FileField(upload_to='work_order_files/%Y/%m', max_length=200, default=None, verbose_name='工单上传文件')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text='创建时间')
     update_time = models.DateTimeField('更新时间', auto_now=True, help_text='更新时间')
     current_exec_user = models.ForeignKey(User,

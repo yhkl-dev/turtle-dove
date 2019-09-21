@@ -15,6 +15,7 @@ from .models import (WorkOrderTask,
                      WorkOrderType,
                      WorkOrderFlowType)
 import datetime
+import os
 
 
 class WorkOrderStatusCodeSerializer(serializers.ModelSerializer):
@@ -234,8 +235,14 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
     '''
         工单任务序列化类
     '''
+    ORDER_ENV_CHOICE = (
+        (0, '后台'),
+        (1, '前端'),
+        (2, '安卓')
+    )
 
     order_task_id = serializers.HiddenField(default=None)
+    # order_env_type = serializers.MultipleChoiceField(choices=ORDER_ENV_CHOICE, allow_blank=False)
     create_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S",
                                             label="创建日期",
                                             read_only=True,
@@ -248,6 +255,17 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault())
 
     order_model = serializers.HiddenField(default=None)
+
+
+    def get_env_type(self, instance):
+        type_list = []
+        for i, q in enumerate(instance.order_env_type.split(',')):
+            data = {
+                "id": i,
+                "name": q
+            }
+            type_list.append(data)
+        return type_list
 
     def get_user_info(self, user_obj):
         try:
@@ -323,8 +341,22 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         return operation_records, operation_replys
 
     def to_representation(self, instance):
+        print(instance.order_files)
+
         ret = super(WorkOrderTaskSerializer, self).to_representation(instance)
+        if instance.order_files:
+            download_url = "http://192.168.234.128:8000/downloadWorkOrderFile/?file_name={}".format(instance.order_files)
+            order_file_path =  os.path.basename(instance.order_files.path)
+        else:
+            download_url = None
+            order_file_path = None
+        ret['order_files'] = order_file_path
+        ret['download_url'] = download_url
         ret.pop('order_status')
+
+
+
+        ret['order_env_type'] = self.get_env_type(instance)
         ret['order_task_id'] = instance.order_task_id
         ret['order_model'] = instance.order_model.model_name
         ret['status_code'] = instance.order_status
@@ -332,6 +364,9 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         ret['created_user'] = instance.created_user.username
         ret['current_exec_user'] = self.get_user_info(instance.current_exec_user)
         ret['current_audit_user'] = self.get_user_info(instance.current_audit_user)
+        ret['order_product_name'] = instance.order_products.service_name
+        ret['order_project_name'] = "{}[{}]".format(instance.order_project.project_name_zh,
+                                                    instance.order_project.project_name_en )
         ret['exec_flow'], ret['current_exec_flow'] = self.get_work_order_exec_flow(instance.current_exec_user, instance)
         ret['audit_flow'], ret['current_audit_flow'] = self.get_work_order_audit_flow(instance.current_audit_user,
                                                                                       instance)
@@ -357,27 +392,22 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
 
         template_work_order_flow_exec_obj = template_work_order_flow_type_obj.task_exec_flow
         work_order_flow_exec_obj = WorkOrderTaskFlow()
-        # work_order_flow_exec_obj = self.copy_field(template_work_order_flow_exec_obj, work_order_flow_exec_obj)
         work_order_flow_exec_obj.flow_name = template_work_order_flow_exec_obj.flow_name
         work_order_flow_exec_obj.flow_type = template_work_order_flow_exec_obj.flow_type
         work_order_flow_exec_obj.save()
 
         template_work_order_flow_audit_obj = template_work_order_flow_type_obj.task_audit_flow
         work_order_flow_audit_obj = WorkOrderTaskFlow()
-        # work_order_flow_audit_obj = self.copy_field(template_work_order_flow_audit_obj, work_order_flow_audit_obj)
         work_order_flow_audit_obj.flow_name = template_work_order_flow_audit_obj.flow_name
         work_order_flow_audit_obj.flow_type = template_work_order_flow_audit_obj.flow_type
         work_order_flow_audit_obj.save()
 
         work_order_flow_type_obj = WorkOrderFlowType()
-        # work_order_flow_type_obj = self.copy_field(template_work_order_flow_type_obj, work_order_flow_type_obj)
         work_order_flow_type_obj.flow_type_name = template_work_order_flow_type_obj.flow_type_name
         work_order_flow_type_obj.flow_type_status = template_work_order_flow_type_obj.flow_type_status
-        # work_order_flow_type_obj.pk = None
 
         work_order_flow_type_obj.task_exec_flow = work_order_flow_exec_obj
         work_order_flow_type_obj.task_audit_flow = work_order_flow_audit_obj
-        ## order_flow_type
 
         work_order_flow_type_obj.save()
 
@@ -423,6 +453,7 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         order_model_obj = self._create_order_model_instance(validated_data['template_order_model'])
+        validated_data['order_task_id'] = instance.order_task_id
         validated_data["order_model"] = order_model_obj
         self.Meta.model.objects.filter(id=instance.id).update(**validated_data)
         return instance
