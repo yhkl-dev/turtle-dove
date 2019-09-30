@@ -1,12 +1,13 @@
-from rest_framework import mixins, viewsets, response, status
-
+from rest_framework import mixins, viewsets, response, status, serializers,permissions
 from .models import Product
 from .serializers import ProductSerializer
 from .filters import ProductFilter
+from rest_framework.response import Response
 from resources.models import Resource
+from django.db.models import Q
 
 
-class ProductViewset(viewsets.ModelViewSet):
+class ProductViewSet(viewsets.ModelViewSet):
     """
     retrieve:
     返回指定业务线信息
@@ -53,6 +54,29 @@ class ProductViewset(viewsets.ModelViewSet):
 
         self.perform_destroy(instance)
         return response.Response(ret, status=status.HTTP_200_OK)
+
+class ProductListViewSet(viewsets.ReadOnlyModelViewSet, mixins.ListModelMixin):
+    """
+    retrieve:
+    返回指定业务线信息
+
+    list:
+    返回业务线列表
+
+    """
+    # queryset = Product.objects.values_list('id', 'service_name', 'pid').filter(~Q(pid=0))
+    # serializer_class = ProductSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = serializers.Serializer
+    # extra_perms_map = {
+    #     "GET": ["products.view_product"]
+    # }
+    # filter_class = ProductFilter
+    # filter_fields = ("pid",)
+
+    def list(self, request, *args, **kwargs):
+        # return Response(data, status=status.HTTP_200_OK)
+        return  Response(Product.objects.values('id', 'service_name').filter(~Q(pid=0)), status=status.HTTP_200_OK)
 
 
 class ProductManageViewSet(mixins.ListModelMixin,

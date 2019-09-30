@@ -3,8 +3,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# Create your models here.
-
 
 class Product(models.Model):
     service_name = models.CharField("业务线名称", max_length=32, help_text="业务线名称")

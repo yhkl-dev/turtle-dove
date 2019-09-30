@@ -42,8 +42,8 @@ class ProductSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.service_name = validated_data.get("service_name", instance.service_name)
         instance.module_letter = validated_data.get("module_letter", instance.module_letter)
-        instance.dev_interface = validated_data.get("dev_interface", instance.dev_interface)
-        instance.op_interface = validated_data.get("op_interface", instance.op_interface)
+        instance.dev_interface.set(list(validated_data.get("dev_interface")))
+        instance.op_interface.set(list(validated_data.get("op_interface")))
         instance.save()
         return instance
 

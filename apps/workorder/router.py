@@ -14,7 +14,10 @@ from .views import (WorkOrderTaskViewset,
                     WorkOrderTaskHistoryViewset,
                     WorkOrderHistoryCountViewSet,
                     WorkOrderTaskExecHistoryViewSet,
-                    WorkOrderTaskAuditHistoryViewSet)
+                    WorkOrderTaskAuditHistoryViewSet,
+                    WorkOrderHistCountCheckByProductViewSet,
+                    LineChartDataViewSet,
+                    LineChartViewSet)
 
 
 work_order_router = DefaultRouter()
@@ -34,3 +37,6 @@ work_order_router.register(r'workOrderTaskHistory', WorkOrderTaskHistoryViewset,
 work_order_router.register(r'workOrderHistoryCount', WorkOrderHistoryCountViewSet, base_name="WorkOrderHistoryCountViewSet")
 work_order_router.register(r'workOrderTaskExecHistory', WorkOrderTaskExecHistoryViewSet, base_name="workOrderTaskExecHistory")
 work_order_router.register(r'workOrderTaskAuditHistory', WorkOrderTaskAuditHistoryViewSet, base_name="workOrderTaskAuditHistory")
+work_order_router.register(r'workOrderHistCountCheckByProduct', WorkOrderHistCountCheckByProductViewSet, base_name="workOrderHistCountCheckByProduct")
+work_order_router.register(r'lineChartData', LineChartDataViewSet, base_name="lineChartData")
+work_order_router.register(r'lineChart', LineChartViewSet, base_name="lineChart")

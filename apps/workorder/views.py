@@ -58,6 +58,134 @@ def download_work_file(request):
                                 content_type="text/json")
 
 
+class LineChartViewSet(viewsets.ViewSet, mixins.ListModelMixin):
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def list(self, request, *args, **kwargs):
+        count_sql = '''
+            select id, model_name, GROUP_CONCAT(id) id_list from work_order_model  GROUP BY model_name
+        '''
+        queryset = WorkOrderModel.objects.raw(count_sql)
+
+        date_sql = '''
+            SELECT id, DATE_SUB( CURDATE( ), INTERVAL date_sum.id DAY ) AS date FROM date_sum ORDER BY id desc 
+        '''
+        date_queryset = WorkOrderTask.objects.raw(date_sql)
+        data = {}
+        temp_list = []
+        for n in date_queryset:
+            temp_list.append(n.date)
+
+        data.update(date_list=temp_list)
+
+        count_data = []
+        for q in queryset:
+            sql = '''
+                SELECT
+                    b.id,
+                    b.date,
+                    c.total 
+                FROM
+                    ( SELECT id, DATE_SUB( CURDATE( ), INTERVAL date_sum.id DAY ) AS date FROM date_sum ) b
+                    LEFT JOIN (SELECT count( * ) total, DATE( create_time ) x FROM work_order_task wot where order_model_id in ({}) GROUP BY DATE( create_time )) c on b.date = c.x
+                    ORDER BY b.date 
+                    
+            '''.format(q.id_list)
+            queryset_a = WorkOrderModel.objects.raw(sql)
+            value_list = []
+            for m in queryset_a:
+                value_list.append(m.total if m.total else 0)
+            current_data = {
+                'name': q.model_name,
+                'value_list': value_list
+            }
+            count_data.append(current_data)
+        data.update(count_data_dict=count_data)
+
+        sql = """
+            SELECT
+              b.id,
+                b.date,
+                a.total 
+            FROM
+                ( SELECT id, DATE_SUB( CURDATE( ), INTERVAL date_sum.id DAY ) AS date FROM date_sum ) b
+                LEFT JOIN ( SELECT count( * ) total, DATE( create_time ) x FROM work_order_task wot GROUP BY DATE( create_time ) ) a ON b.date = a.x
+            ORDER BY b.date 
+        """
+        queryset_total = WorkOrderModel.objects.raw(sql)
+        total_data_list = []
+        for x in queryset_total:
+            total_data_list.append(x.total if x.total else 0)
+        data.update(total_data_list=total_data_list)
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class LineChartDataViewSet(viewsets.ViewSet, mixins.ListModelMixin):
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def list(self, request, *args, **kwargs):
+        name_data = []
+        value_data = []
+        sql = """
+            SELECT
+              b.id,
+                b.date,
+                a.total 
+            FROM
+                ( SELECT id, DATE_SUB( CURDATE( ), INTERVAL date_sum.id DAY ) AS date FROM date_sum ) b
+                LEFT JOIN ( SELECT count( * ) total, DATE( create_time ) x FROM work_order_task wot GROUP BY DATE( create_time ) ) a ON b.date = a.x
+            ORDER BY b.date 
+        """
+        queryset = WorkOrderModel.objects.raw(sql)
+        for q in queryset:
+            # info = {
+            #     "name": q.date,
+            #     "total_value": q.total
+            # }
+            value = q.total if q.total else 0
+            name_data.append(q.date)
+            value_data.append(value)
+        data = {
+            "name_data": name_data,
+            "value_data": value_data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class WorkOrderHistCountCheckByProductViewSet(viewsets.ViewSet,
+                                              mixins.ListModelMixin):
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def list(self, request, *args, **kwargs):
+        id = request.GET.get('id')
+        data = []
+        sql = """
+             SELECT
+                wot.id,
+                count( wom.model_name ) counts,
+                wom.model_name 
+            FROM
+                work_order_task wot,
+                work_order_model wom 
+            WHERE
+                wot.order_model_id = wom.id 
+                and wot.order_products_id = {}
+            GROUP BY
+                wom.model_name
+        """.format(id)
+        queryset = WorkOrderModel.objects.raw(sql)
+        for q in queryset:
+            info = {
+                "name": q.model_name,
+                "value": q.counts
+            }
+            data.append(info)
+        return Response(data, status=status.HTTP_200_OK)
+
 class WorkOrderHistoryCountViewSet(viewsets.ViewSet, mixins.ListModelMixin):
 
     permission_classes = (permissions.IsAuthenticated,)
@@ -317,7 +445,6 @@ class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
         # user = self.request.user
         # 首先根据用户查询 work_order_flow_item 里面有没有当前用户的 item
         work_order_flow_item_queryset = WorkOrderTaskFlowItem.objects.filter(exec_user=user)  # 得到 item 列表
-        print('work_order_flow_item_queryset', work_order_flow_item_queryset)
         work_flow_list = []
         for flow_item_obj in work_order_flow_item_queryset:
             work_flow_list.append(flow_item_obj.belong_flow)
@@ -347,7 +474,6 @@ class AuditWorkOrderTaskListViewset(viewsets.ReadOnlyModelViewSet):
             try:
                 work_order_task_obj_list_queryset = WorkOrderTask.objects.filter(
                     Q(order_model=work_order_model_obj) & Q(order_status__in=[2, 6, 7])).order_by('-update_time')
-                print(work_order_task_obj_list_queryset)
                 for q in work_order_task_obj_list_queryset:
                     if q not in work_order_task_list:
                         work_order_task_list.append(q)
@@ -424,7 +550,6 @@ class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin
     def create(self, request, *args, **kwargs):
         status_code = int(request.data.get('ops_status'))
         work_order_task_pk = request.data.get('work_order')
-        print(work_order_task_pk)
 
         if self._change_work_order_task_status(status_code, work_order_task_pk):
             serializer = self.get_serializer(data=request.data)
@@ -515,10 +640,7 @@ class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin
             # 确认执行 -> 执行人执行中
 
             work_order_exec_flow_user = [q.exec_user for q in work_order_exec_flow]
-            print(work_order_exec_flow_user)
             current_ptr = work_order_exec_flow_user.index(current_operation_user)
-            print(work_order_exec_flow_user)
-            print('current_ptr', current_ptr)
             current_audit_flow_item = work_order_exec_flow[current_ptr]
             current_audit_flow_item.ops_status = 5
             current_audit_flow_item.save()
@@ -577,7 +699,6 @@ class WorkOrderOperationViewset(viewsets.GenericViewSet, mixins.CreateModelMixin
                 current_exec_flow_item.save()
                 next_exec_flow_item = work_order_exec_flow[next_ptr]
                 work_order_task_obj.current_exec_user = next_exec_flow_item.exec_user
-                print("当前处理用户", work_order_task_obj.current_exec_user)
                 # 执行完成需要给用户发消息确认 同时将结果添加至工单任务表的结果中
                 work_order_task_obj.save()
                 return True

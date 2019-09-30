@@ -340,9 +340,25 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
 
         return operation_records, operation_replys
 
-    def to_representation(self, instance):
-        print(instance.order_files)
+    def get_complete_time(self, instance):
+        if instance.order_status == 10:
+            try:
+                complete_ope = WorkOrderOperation.objects.filter(Q(work_order__exact=instance) & Q(ops_status__exact=8)).order_by(
+                    '-create_time')[0]
+                start_ope = WorkOrderOperation.objects.filter(Q(work_order__exact=instance) & Q(ops_status__exact=2)).order_by(
+                    '-create_time')[0]
+                flow_time = complete_ope.create_time - start_ope.create_time
+                seconds = flow_time.seconds
+                m, s = divmod(seconds, 60)
+                h, m = divmod(m, 60)
+                d, h = divmod(h, 24)
+                print("{0} 天 {1} 小时 {2} 分".format(d, h, m))
+                return "{0} 天 {1} 小时 {2} 分".format(d, h, m)
+            except Exception:
+                return None
+        return None
 
+    def to_representation(self, instance):
         ret = super(WorkOrderTaskSerializer, self).to_representation(instance)
         if instance.order_files:
             download_url = "http://192.168.234.128:8000/downloadWorkOrderFile/?file_name={}".format(instance.order_files)
@@ -350,12 +366,10 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
         else:
             download_url = None
             order_file_path = None
+        ret['complete_time'] = self.get_complete_time(instance)
         ret['order_files'] = order_file_path
         ret['download_url'] = download_url
         ret.pop('order_status')
-
-
-
         ret['order_env_type'] = self.get_env_type(instance)
         ret['order_task_id'] = instance.order_task_id
         ret['order_model'] = instance.order_model.model_name
@@ -413,7 +427,6 @@ class WorkOrderTaskSerializer(serializers.ModelSerializer):
 
         order_model_obj.order_flow_type = work_order_flow_type_obj
         order_model_obj.order_type = work_order_type_obj
-
 
         # 处理工单流程项
         template_work_order_flow_exec_item_queryset = TemplateWorkOrderTaskFlowItem.objects.filter(
