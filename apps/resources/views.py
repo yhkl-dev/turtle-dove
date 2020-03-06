@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from TurtleDove.paginations import Pagination
+from turtle_dove.paginations import Pagination
 from .serializers import ResourceUserSerializer, ResourceSerializer, ResourceTypeSerializer
 from .models import ResourceUser, Resource, ResourceType
 from .filters import ResourcesFilter, ResourceUserFilter

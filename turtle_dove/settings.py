@@ -56,11 +56,11 @@ INSTALLED_APPS = [
     'resources.apps.ResourcesConfig',
     'products.apps.ProductsConfig',
     'zabbix.apps.ZabbixConfig',
-    'opsdocs.apps.OpsdocsConfig',
+    # 'opsdocs.apps.OpsdocsConfig',
     'autotask.apps.AutotaskConfig',
-    'serverreports.apps.ServerreportsConfig',
+    # 'serverreports.apps.ServerreportsConfig',
     'workorder.apps.WorkorderConfig',
-    'projectManager.apps.ProjectmanagerConfig'
+    # 'projectManager.apps.ProjectmanagerConfig'
 ]
 
 MIDDLEWARE = [
@@ -74,7 +74,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'TurtleDove.urls'
+ROOT_URLCONF = 'turtle_dove.urls'
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
@@ -97,8 +97,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'TurtleDove.wsgi.application'
-ASGI_APPLICATION = "TurtleDove.routing.application"
+WSGI_APPLICATION = 'turtle_dove.wsgi.application'
+ASGI_APPLICATION = "turtle_dove.routing.application"
 
 
 # Database
@@ -169,7 +169,7 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
-    "DEFAULT_PAGINATION_CLASS": "TurtleDove.paginations.Pagination",
+    "DEFAULT_PAGINATION_CLASS": "turtle_dove.paginations.Pagination",
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
     ),
@@ -179,7 +179,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
     ),
     "DEFAULT_PERMISSION_CLASSES": (
-        "TurtleDove.permissions.ModelPermissions",
+        "turtle_dove.permissions.ModelPermissions",
     ),
 }
 

@@ -1,6 +1,6 @@
 from celery import shared_task
 from celery.schedules import crontab
-from TurtleDove.celery import app
+from turtle_dove.celery import app
 from util.ansible_api import ANSRunner
 from .models import Tasks, AdHocTasks
 # from celery import add_periodic_task

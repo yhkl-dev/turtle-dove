@@ -1,4 +1,4 @@
-django
+django==3.0.4
 django-cors-headers
 channels
 djangorestframework
@@ -9,3 +9,5 @@ coreapi-cli
 pycrypto
 asyncssh
 ansible
+pymysql
+paramiko

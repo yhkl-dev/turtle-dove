@@ -3,6 +3,6 @@ from .views import GroupsViewset, UserGroupsViewset, GroupMembersViewset
 
 
 group_router = DefaultRouter()
-group_router.register(r'groups', GroupsViewset, base_name="groups")
-group_router.register(r'usergroups', UserGroupsViewset, base_name="usergroups")
-group_router.register(r'groupmembers', GroupMembersViewset, base_name="groupmembers")
+group_router.register(r'groups', GroupsViewset, basename="groups")
+group_router.register(r'usergroups', UserGroupsViewset, basename="usergroups")
+group_router.register(r'groupmembers', GroupMembersViewset, basename="groupmembers")

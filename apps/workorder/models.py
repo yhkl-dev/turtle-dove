@@ -1,13 +1,12 @@
-from django.db import models
 from django.contrib.auth import get_user_model
-from projectManager.models import Project, ProjectPlatformEnv
+from django.db import models
 from products.models import Product
+# from projectManager.models import Project
 
 User = get_user_model()
 
 
 class WorkOrderStatusCode(models.Model):
-
     status_code = models.IntegerField('状态码', help_text='状态码', null=False)
     status_name = models.CharField('状态名称', max_length=40, help_text='状态名称', null=False)
     status_belong_table = models.CharField('所在表格', max_length=40, help_text='所在表格', null=False)
@@ -21,7 +20,6 @@ class WorkOrderStatusCode(models.Model):
 
 
 class TemplateWorkOrderProject(models.Model):
-
     project_name = models.CharField('项目名称', max_length=200, help_text='项目名称')
     project_info = models.CharField('项目信息', max_length=255, help_text='项目信息')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text='创建时间')
@@ -43,7 +41,7 @@ class TemplateWorkOrderTaskFlow(models.Model):
         (1, '审核')
     )
 
-    flow_name = models.CharField('流程名称', max_length=200, db_index=True, unique=True,  help_text='流程名称')
+    flow_name = models.CharField('流程名称', max_length=200, db_index=True, unique=True, help_text='流程名称')
     flow_type = models.IntegerField('流程类型', choices=FLOW_TYPE_CHOICE, help_text='流程类型')
     create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
     change_time = models.DateTimeField('上次修改时间', auto_now_add=True, help_text='上次修改时间')
@@ -80,11 +78,11 @@ class TemplateWorkOrderTaskFlowItem(models.Model):
     )
 
     belong_flow = models.ForeignKey(TemplateWorkOrderTaskFlow,
-                                  on_delete=models.CASCADE,
-                                  help_text='所属流程名称',
-                                  null=False,
-                                  verbose_name='所属流程名称',
-                                  related_name='belong_flow')
+                                    on_delete=models.CASCADE,
+                                    help_text='所属流程名称',
+                                    null=False,
+                                    verbose_name='所属流程名称',
+                                    related_name='belong_flow')
     flow_item_name = models.CharField('流程项名称', max_length=200, help_text='流程项名称')
     # 数字由小到大 顺序执行
     exec_order = models.IntegerField('执行顺序', help_text='执行顺序')
@@ -95,7 +93,6 @@ class TemplateWorkOrderTaskFlowItem(models.Model):
                                   verbose_name='执行/审核用户',
                                   related_name='template_exec_user')
     ops_status = models.IntegerField('状态', choices=OPS_STATUS_CHOICE, null=True, help_text='状态')
-
 
     def __str__(self):
         return "{}[{}]".format(self.belong_flow, self.flow_item_name)
@@ -130,8 +127,7 @@ class TemplateWorkOrderFlowType(models.Model):
                                         related_name='task_audit_flow')
     flow_type_status = models.IntegerField('工单状态', choices=FLOW_TYPE_STATUS_CHOICE, default=1, help_text='状态')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text="添加时间")
-    change_time = models.DateTimeField('修改时间', auto_now=True,  help_text="修改时间")
-
+    change_time = models.DateTimeField('修改时间', auto_now=True, help_text="修改时间")
 
     def __str__(self):
         return "{}".format(self.flow_type_name)
@@ -142,7 +138,6 @@ class TemplateWorkOrderFlowType(models.Model):
 
 
 class TemplateWorkOrderType(models.Model):
-
     WORK_ORDER_TYPE_STATUS_CHOICE = (
         (0, '禁用'),
         (1, '启用')
@@ -191,7 +186,6 @@ class TemplateWorkOrderModel(models.Model):
     mode_status = models.IntegerField('状态', choices=MODEL_STATUS, default=1, help_text='状态')
     model_create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
 
-
     def __str__(self):
         return self.model_name
 
@@ -202,7 +196,6 @@ class TemplateWorkOrderModel(models.Model):
 
 ## 工单实例
 class WorkOrderProject(models.Model):
-
     project_name = models.CharField('项目名称', max_length=200, help_text='项目名称')
     project_info = models.CharField('项目信息', max_length=255, help_text='项目信息')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text='创建时间')
@@ -260,11 +253,11 @@ class WorkOrderTaskFlowItem(models.Model):
     )
     #
     belong_flow = models.ForeignKey(WorkOrderTaskFlow,
-                                  on_delete=models.CASCADE,
-                                  help_text='所属流程名称',
-                                  null=False,
-                                  verbose_name='所属流程名称',
-                                  related_name='belong_flow')
+                                    on_delete=models.CASCADE,
+                                    help_text='所属流程名称',
+                                    null=False,
+                                    verbose_name='所属流程名称',
+                                    related_name='belong_flow')
     flow_item_name = models.CharField('流程项名称', max_length=200, help_text='流程项名称')
     # 数字由小到大 顺序执行
     exec_order = models.IntegerField('执行顺序', help_text='执行顺序')
@@ -275,7 +268,6 @@ class WorkOrderTaskFlowItem(models.Model):
                                   verbose_name='执行/审核用户',
                                   related_name='exec_user')
     ops_status = models.IntegerField('状态', choices=OPS_STATUS_CHOICE, null=True, help_text='状态')
-
 
     def __str__(self):
         return "{}[{}]".format(self.belong_flow, self.flow_item_name)
@@ -310,8 +302,7 @@ class WorkOrderFlowType(models.Model):
                                         related_name='audit_flow')
     flow_type_status = models.IntegerField('工单状态', choices=FLOW_TYPE_STATUS_CHOICE, default=1, help_text='状态')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text="添加时间")
-    change_time = models.DateTimeField('修改时间', auto_now=True,  help_text="修改时间")
-
+    change_time = models.DateTimeField('修改时间', auto_now=True, help_text="修改时间")
 
     def __str__(self):
         return "{}".format(self.flow_type_name)
@@ -322,7 +313,6 @@ class WorkOrderFlowType(models.Model):
 
 
 class WorkOrderType(models.Model):
-
     WORK_ORDER_TYPE_STATUS_CHOICE = (
         (0, '禁用'),
         (1, '启用')
@@ -372,7 +362,6 @@ class WorkOrderModel(models.Model):
     mode_status = models.IntegerField('状态', choices=MODEL_STATUS, default=1, help_text='状态')
     model_create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
 
-
     def __str__(self):
         return self.model_name
 
@@ -382,7 +371,6 @@ class WorkOrderModel(models.Model):
 
 
 class WorkOrderTask(models.Model):
-
     '''
         工单内容表
     '''
@@ -415,11 +403,11 @@ class WorkOrderTask(models.Model):
                                      help_text='工单ID')
     order_title = models.CharField('工单标题', max_length=100, help_text='工单标题')
     template_order_model = models.ForeignKey(TemplateWorkOrderModel,
-                                    on_delete=models.CASCADE,
-                                    null=False,
-                                    help_text='工单模板模型 ',
-                                    verbose_name='工单模板模型',
-                                    related_name='template_order_model')
+                                             on_delete=models.CASCADE,
+                                             null=False,
+                                             help_text='工单模板模型 ',
+                                             verbose_name='工单模板模型',
+                                             related_name='template_order_model')
     order_model = models.ForeignKey(WorkOrderModel,
                                     on_delete=models.CASCADE,
                                     null=True,
@@ -433,16 +421,11 @@ class WorkOrderTask(models.Model):
                                      help_text='创建用户',
                                      verbose_name='创建用户',
                                      related_name='created_user')
-    order_project = models.ForeignKey(Project,
-                                      on_delete=models.CASCADE,
-                                      null=True,
-                                      help_text='项目名称',
-                                      verbose_name='工单申请项目')
     order_products = models.ForeignKey(Product,
-                                      on_delete=models.CASCADE,
-                                      null=True,
-                                      help_text='工单项目环境',
-                                      verbose_name='工单项目环境')
+                                       on_delete=models.CASCADE,
+                                       null=True,
+                                       help_text='工单项目环境',
+                                       verbose_name='工单项目环境')
     # order_env_type = models.ManyToManyField(ProjectPlatformEnv,
     #                                         verbose_name='部署平台',
     #                                         blank=True,
@@ -450,7 +433,8 @@ class WorkOrderTask(models.Model):
     #                                         help_text='部署平台')
     order_env_type = models.CharField('平台类型', max_length=20, default=None, help_text='平台类型')
     order_purpose = models.TextField('工单需求', help_text='工单需求')
-    order_files = models.FileField(upload_to='work_order_files/%Y/%m', max_length=200, default=None, verbose_name='工单上传文件')
+    order_files = models.FileField(upload_to='work_order_files/%Y/%m', max_length=200, default=None,
+                                   verbose_name='工单上传文件')
     create_time = models.DateTimeField('创建时间', auto_now_add=True, help_text='创建时间')
     update_time = models.DateTimeField('更新时间', auto_now=True, help_text='更新时间')
     current_exec_user = models.ForeignKey(User,
@@ -477,7 +461,6 @@ class WorkOrderTask(models.Model):
 
 
 class WorkOrderOperation(models.Model):
-
     '''
         工单操作表
     '''
@@ -513,9 +496,8 @@ class WorkOrderOperation(models.Model):
                                  verbose_name='执行用户',
                                  related_name='work_order_ops_user')
     ops_status = models.IntegerField('操作状态', choices=OPS_STATUS_CHOICE, help_text='操作状态')
-    ops_reply_content = models.TextField('回复内容', null=True, blank=True,  help_text='回复内容')
+    ops_reply_content = models.TextField('回复内容', null=True, blank=True, help_text='回复内容')
     create_time = models.DateTimeField('创建时间', auto_now=True, help_text='创建时间')
-
 
     class Meta:
         ordering = ['id']
